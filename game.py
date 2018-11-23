@@ -260,10 +260,10 @@ class Menu(GameState):
                 self.change_to = Game2.id
             elif point_q.shape.body.id == self.game1_hs_button.id:
                 self.kwargs['game'] = Game1.name
-                self.change_to = Endgame.id
+                self.change_to = HighScore.id
             elif point_q.shape.body.id == self.game2_hs_button.id:
                 self.kwargs['game'] = Game2.name
-                self.change_to = Endgame.id
+                self.change_to = HighScore.id
             elif point_q.shape.body.id == self.gravity_button.id:
                 self.changing_gravity = not self.changing_gravity
 
@@ -553,14 +553,14 @@ class HighScore(GameState):
                                'Highscores:',
                                # font_name='Times New Roman',
                                font_size=32,
-                               x=647, y=420,
+                               x=647-330, y=420-70,
                                color=(255,255,255,255),
                                anchor_x='left', anchor_y='baseline',
                                batch=self.batch, group=self.foreground)
         # scrolling hs ########################################################
-        self.score_scroll = ScrollingText(self.batch, (655, 100), 290-210,
+        self.score_scroll = ScrollingText(self.batch, (325, 100-70), 290-210,
             300, self.scores_text, align='right')
-        self.name_scroll = ScrollingText(self.batch, (655+100, 100), 290+200,
+        self.name_scroll = ScrollingText(self.batch, (325+100, 100-70), 290+200,
             300, self.names_text)
         #######################################################################
         self.event_handlers.extend((
