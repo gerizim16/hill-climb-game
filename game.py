@@ -260,10 +260,10 @@ class Menu(GameState):
                 self.change_to = Game2.id
             elif point_q.shape.body.id == self.game1_hs_button.id:
                 self.kwargs['game'] = Game1.name
-                self.change_to = Game1.id
+                self.change_to = Endgame.id
             elif point_q.shape.body.id == self.game2_hs_button.id:
                 self.kwargs['game'] = Game2.name
-                self.change_to = Game2.id
+                self.change_to = Endgame.id
             elif point_q.shape.body.id == self.gravity_button.id:
                 self.changing_gravity = not self.changing_gravity
 
@@ -454,7 +454,7 @@ class Game2(GameState):
         self.speed_sprite_bg.scale = 0.5
         self.speed_sprite.scale = 0.5
         # goal sprite
-        self.goalmeter = GoalSprite(self.batch, (1050, 640))
+        self.goalmeter = GoalSprite(self.batch, (1050, 640), group=self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
