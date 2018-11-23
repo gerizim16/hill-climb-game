@@ -90,6 +90,8 @@ class Window(pyglet.window.Window):
                 self.activated_mode = Menu(self.main_batch, self.space, self)
             elif new_mode == Endgame.id:
                 self.activated_mode = Endgame(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
+            elif new_mode == HighScore.id:
+                self.activated_mode = HighScore(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
 
     # def on_mouse_press(self, x, y, button, modifier):
     #     print(x, y, button, modifier)
@@ -194,15 +196,21 @@ class Menu(GameState):
             amount=2, x_offset=1600)
         # buttons #############################################################
         self.game1_button = Button(self.batch, 'game1_button', 
-            (self.window.width//2-320, 700), resources.game1_button_img, 60)
+            (self.window.width//2-580, 700), resources.game1_button_img, 60)
         self.game2_button = Button(self.batch, 'game2_button', 
-            (self.window.width//2-220, 700), resources.game2_button_img, 60)
+            (self.window.width//2-440, 700), resources.game2_button_img, 60)
+        self.game1_hs_button = Button(self.batch, 'game1_hs_button', 
+            (self.window.width//2-300, 700), resources.game1_hs_button_img, 60)
+        self.game2_hs_button = Button(self.batch, 'game2_hs_button', 
+            (self.window.width//2-160, 700), resources.game2_hs_button_img, 60)
         self.gravity_button = Button(self.batch, 'gravity_button', 
             (self.window.width//2+320, 700), resources.gravity_button_img, 30)
         #######################################################################
         self.space.add(
                   *self.game1_button.get_physical_object(),
                   *self.game2_button.get_physical_object(),
+                  *self.game1_hs_button.get_physical_object(),
+                  *self.game2_hs_button.get_physical_object(),
                   *self.gravity_button.get_physical_object()
                  )
 
@@ -213,11 +221,19 @@ class Menu(GameState):
         if button_shape.id == self.game1_button.id:
             self.game1_button.update_rotate = False
             self.game1_button.sprite.rotation = 0
-            self.game1_button.sprite.image = resources.game1_button_img_hover
+            self.game1_button.sprite.image = resources.game1_button_hover_img
         elif button_shape.id == self.game2_button.id:
             self.game2_button.update_rotate = False
             self.game2_button.sprite.rotation = 0
-            self.game2_button.sprite.image = resources.game2_button_img_hover
+            self.game2_button.sprite.image = resources.game2_button_hover_img
+        elif button_shape.id == self.game1_hs_button.id:
+            self.game1_hs_button.update_rotate = False
+            self.game1_hs_button.sprite.rotation = 0
+            self.game1_hs_button.sprite.image = resources.game1_hs_button_hover_img
+        elif button_shape.id == self.game2_hs_button.id:
+            self.game2_hs_button.update_rotate = False
+            self.game2_hs_button.sprite.rotation = 0
+            self.game2_hs_button.sprite.image = resources.game2_hs_button_hover_img
         return True
 
     def on_mouse_unhover(self, arbiter, space, data):
@@ -228,6 +244,12 @@ class Menu(GameState):
         elif button_shape.id == self.game2_button.id:
             self.game2_button.update_rotate = True
             self.game2_button.sprite.image = resources.game2_button_img
+        elif button_shape.id == self.game1_hs_button.id:
+            self.game1_hs_button.update_rotate = True
+            self.game1_hs_button.sprite.image = resources.game1_hs_button_img
+        elif button_shape.id == self.game2_hs_button.id:
+            self.game2_hs_button.update_rotate = True
+            self.game2_hs_button.sprite.image = resources.game2_hs_button_img
 
     def on_mouse_press(self, x, y, button, modifier):
         point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
@@ -235,6 +257,12 @@ class Menu(GameState):
             if point_q.shape.body.id == self.game1_button.id:
                 self.change_to = Game1.id
             elif point_q.shape.body.id == self.game2_button.id:
+                self.change_to = Game2.id
+            elif point_q.shape.body.id == self.game1_hs_button.id:
+                self.kwargs['game'] = Game1.name
+                self.change_to = Game1.id
+            elif point_q.shape.body.id == self.game2_hs_button.id:
+                self.kwargs['game'] = Game2.name
                 self.change_to = Game2.id
             elif point_q.shape.body.id == self.gravity_button.id:
                 self.changing_gravity = not self.changing_gravity
@@ -259,10 +287,12 @@ class Menu(GameState):
         self.obstacles.update()
         self.game1_button.update()
         self.game2_button.update()
+        self.game1_hs_button.update()
+        self.game2_hs_button.update()
         self.gravity_button.update()
 ###############################################################################
 class Game1(GameState):
-    id = 3
+    id = 4
     name = 'hillclimb'
     def __init__(self, batch, space, window):
         super().__init__(batch, space, window)
@@ -376,7 +406,7 @@ class Game1(GameState):
         self.obstacles.update(offset)
 ###############################################################################
 class Game2(GameState):
-    id = 4
+    id = 5
     name = 'motor_race'
     def __init__(self, batch, space, window):
         super().__init__(batch, space, window)
@@ -490,6 +520,84 @@ class Game2(GameState):
         self.terrain1.update(offset)
         self.obstacles.update(offset)
 ###############################################################################
+class HighScore(GameState):
+    id = 3
+    def __init__(self, batch, space, window, *args, **kwargs):
+        super().__init__(batch, space, window, mouse_hover=True, bounded=True)
+        self.score = kwargs.get('score')
+        self.game = kwargs.get('game')
+        self.choice = 0
+
+        self.names_text = 'None'
+        self.scores_text = 'None'
+        # objects #############################################################
+        if self.game == Game1.name:
+            self.player = Tank(self.batch, self.space, self.window, 
+                               (self.window.width//2, 600))
+            color_set = 'green'
+        elif self.game == Game2.name:
+            self.player = MotorBike(self.batch, self.space, self.window, 
+                               (self.window.width//2, 600))
+            color_set = 'gray'
+        self.terrain1 = Terrain(self.batch, self.space, self.window,
+                                mid_height=400, end_coordinate=1480, 
+                                color_set=color_set)
+        self.obstacles = Obstacles(self.batch, self.space, self.window,
+            end_coordinate=self.window.width, frequency=30,
+            amount=1, x_offset=1600, mid_height=450)
+        # buttons #############################################################
+        self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
+            x=55, y=self.window.height-35, batch=self.batch)
+        # labels ##############################################################
+        self.highscore_label = pyglet.text.Label(
+                               'Highscores:',
+                               # font_name='Times New Roman',
+                               font_size=32,
+                               x=647, y=420,
+                               color=(255,255,255,255),
+                               anchor_x='left', anchor_y='baseline',
+                               batch=self.batch, group=self.foreground)
+        # scrolling hs ########################################################
+        self.score_scroll = ScrollingText(self.batch, (655, 100), 290-210,
+            300, self.scores_text, align='right')
+        self.name_scroll = ScrollingText(self.batch, (655+100, 100), 290+200,
+            300, self.names_text)
+        #######################################################################
+        self.event_handlers.extend((
+            self.on_mouse_press,
+        ))
+
+        self.window.push_handlers(*self.event_handlers)
+
+        self.update_hs_text()
+
+    def update(self):
+        self.choice = (self.choice + choice((-1, 1))) % 12
+        if self.choice >= 6:
+            self.player.forward(self.player.torque, self.player.speed)
+        else:
+            self.player.reverse(self.player.torque, self.player.speed)
+        self.player.update()
+        self.obstacles.update()
+        self.score_scroll.update()
+        self.name_scroll.update()
+
+    def update_hs_text(self): # 38 chars
+        self.scores_text = ''
+        self.names_text = ''
+        highscores = get_highscores('{}.csv'.format(self.game))
+        if highscores:
+            for hs_set in highscores:
+                self.scores_text += '{:>5.1f}\n'.format(hs_set[1])
+                self.names_text += '{:<32}\n'.format(hs_set[0])
+            self.score_scroll.update_text(self.scores_text)
+            self.name_scroll.update_text(self.names_text)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
+           self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
+           self.change_to = Menu.id
+###############################################################################
 class Endgame(GameState):
     id = 2
     def __init__(self, batch, space, window, *args, **kwargs):
@@ -504,9 +612,6 @@ class Endgame(GameState):
             self.units = ''
         self.names_text = 'None'
         self.scores_text = 'None'
-
-        self.changing_gravity = True
-        self.adder = [5, 5]
         # objects #############################################################
         if self.game == Game1.name:
             self.player = Tank(self.batch, self.space, self.window, 

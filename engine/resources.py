@@ -43,26 +43,26 @@ images.append(mb_holder_img)
 game1_button_img = pyglet.resource.image('game1.png')
 images.append(game1_button_img)
 
-game1_button_img_hover = pyglet.resource.image('game1_hover.png')
-images.append(game1_button_img_hover)
+game1_button_hover_img = pyglet.resource.image('game1_hover.png')
+images.append(game1_button_hover_img)
 
 game2_button_img = pyglet.resource.image('game2.png')
 images.append(game2_button_img)
 
-game2_button_img_hover = pyglet.resource.image('game2_hover.png')
-images.append(game2_button_img_hover)
+game2_button_hover_img = pyglet.resource.image('game2_hover.png')
+images.append(game2_button_hover_img)
 
 game1_hs_button_img = pyglet.resource.image('game1_hs.png')
-images.append(game1_button_img)
+images.append(game1_hs_button_img)
 
-game1_hs_button_img_hover = pyglet.resource.image('game1_hs_hover.png')
-images.append(game1_button_img_hover)
+game1_hs_button_hover_img = pyglet.resource.image('game1_hs_hover.png')
+images.append(game1_hs_button_hover_img)
 
 game2_hs_button_img = pyglet.resource.image('game2_hs.png')
-images.append(game2_button_img)
+images.append(game2_hs_button_img)
 
-game2_hs_button_img_hover = pyglet.resource.image('game2_hs_hover.png')
-images.append(game2_button_img_hover)
+game2_hs_button_hover_img = pyglet.resource.image('game2_hs_hover.png')
+images.append(game2_hs_button_hover_img)
 
 menu_button_img = pyglet.resource.image('menu.png')
 images.append(menu_button_img)
