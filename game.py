@@ -293,23 +293,23 @@ class Game1(GameState):
         # motor meter sprite
         self.motor_sprite_bg = pyglet.sprite.Sprite(
             img=resources.circle_meter_img,
-            x=self.window.width//2-320, y=50, batch=self.batch)
+            x=self.window.width//2-320, y=50, batch=self.batch, group=self.midground)
         self.motor_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2-320, y=50, batch=self.batch)
+            x=self.window.width//2-320, y=50, batch=self.batch, group=self.foreground)
         self.motor_sprite.rotation = -25
         self.motor_sprite_bg.scale = 0.5
         self.motor_sprite.scale = 0.5
         # speed meter sprite
         self.speed_sprite_bg = pyglet.sprite.Sprite(
             img=resources.circle_meter_img,
-            x=self.window.width//2+320, y=50, batch=self.batch)
+            x=self.window.width//2+320, y=50, batch=self.batch, group=self.midground)
         self.speed_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2+320, y=50, batch=self.batch)
+            x=self.window.width//2+320, y=50, batch=self.batch, group=self.foreground)
         self.speed_sprite.rotation = -25
         self.speed_sprite_bg.scale = 0.5
         self.speed_sprite.scale = 0.5
         # goal sprite
-        self.goalmeter = GoalSprite(self.batch, (1050, 640))
+        self.goalmeter = GoalSprite(self.batch, (1050, 640), self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)

@@ -2,13 +2,14 @@ import pyglet
 from . import resources
 
 class GoalSprite(object):
-    def __init__(self, batch, position):
+    def __init__(self, batch, position, group):
         x, y = position
         self.distance = resources.bg_goal_meter_img.width - resources.goal_meter_img.width + 40
         self.start = x - self.distance/2
         self.meter_sprite = pyglet.sprite.Sprite(
             img=resources.goal_meter_img, 
-            x=self.start, y=y, batch=batch
+            x=self.start, y=y, batch=batch,
+            group=group
         )
 
         self.bg_sprite = pyglet.sprite.Sprite(
