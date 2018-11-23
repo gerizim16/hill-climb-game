@@ -2,5 +2,4 @@
 __pycache__/
 
 *.psd
-hillclimb.csv
-motor_race.csv
+*.csv
