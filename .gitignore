@@ -1,1 +1,6 @@
-hillclimb.csv motor_race.csv .vscode engine/__pycache__/
+.vscode 
+__pycache__/
+
+*.psd
+hillclimb.csv
+motor_race.csv
