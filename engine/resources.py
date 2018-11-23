@@ -7,7 +7,7 @@ def center_image(image):
     image.anchor_y = image.height / 2
 
 # Tell pyglet where to find the resources
-pyglet.resource.path = ['../resources']
+pyglet.resource.path = ['./resources']
 pyglet.resource.reindex()
 
 images = []
@@ -98,4 +98,4 @@ for image in images:
     center_image(image)
 
 # Load the engine_sfx without streaming
-engine_sfx = pyglet.media.load('../resources/engine_sfx.wav', streaming=False)
+engine_sfx = pyglet.media.load('./resources/engine_sfx.wav', streaming=False)
