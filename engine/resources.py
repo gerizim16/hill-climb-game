@@ -97,5 +97,6 @@ images.append(bg_goal_meter_img)
 for image in images:
     center_image(image)
 
-# Load the engine_sfx without streaming
+# Load sfx without streaming
 engine_sfx = pyglet.media.load('./resources/engine_sfx.wav', streaming=False)
+bg_music = pyglet.media.load('./resources/bg_music.wav', streaming=False)

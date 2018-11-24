@@ -18,7 +18,7 @@ from engine.text_input import TextInput
 from engine.hs_handling import get_highscores, add_highscore
 from engine.scrolling_text import ScrollingText
 from engine.custom_sprites import GoalSprite
-from engine.engine_sound import EngineSound
+from engine.sound_loop import SoundLoop
 
 # categories: body, wheels, tank threads, 
 #             floor, obstacles, tank boxlives, 
@@ -40,8 +40,14 @@ class Window(pyglet.window.Window):
         self.activated_mode = Menu(self.main_batch, self.space, self)
         self.change_mode = None
 
-        # self.options = DrawOptions() # debugging
+        self.options = DrawOptions() # debugging
+        self.options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES # debugging
         self.fps_display = pyglet.clock.ClockDisplay(color=(1,1,1,1)) # debugging
+
+        # bg music ############################################################
+        self.bg_music = SoundLoop(resources.bg_music)
+        self.bg_music.play()
+        #######################################################################
 
         pyglet.clock.schedule_interval(self.update, 1/60.0)
 
@@ -83,14 +89,19 @@ class Window(pyglet.window.Window):
             self.pop_handlers()
             # create new gamestate instance
             if new_mode == Game1.id:
+                self.bg_music.volume = 0.1
                 self.activated_mode = Game1(self.main_batch, self.space, self)
             if new_mode == Game2.id:
+                self.bg_music.volume = 0.1
                 self.activated_mode = Game2(self.main_batch, self.space, self)
             elif new_mode == Menu.id:
+                self.bg_music.volume = 0.7
                 self.activated_mode = Menu(self.main_batch, self.space, self)
             elif new_mode == Endgame.id:
+                self.bg_music.volume = 0.7
                 self.activated_mode = Endgame(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
             elif new_mode == HighScore.id:
+                self.bg_music.volume = 0.7
                 self.activated_mode = HighScore(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
 
     # def on_mouse_press(self, x, y, button, modifier):
@@ -216,6 +227,10 @@ class Menu(GameState):
                  )
 
         self.window.push_handlers(*self.event_handlers)
+        # sound fx ############################################################
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.volume = 0.4
+        self.engine_sound.play()
 
     def on_mouse_hover(self, arbiter, space, data):
         button_shape, mouse_shape = arbiter.shapes
@@ -267,6 +282,9 @@ class Menu(GameState):
                 self.change_to = HighScore.id
             elif point_q.shape.body.id == self.gravity_button.id:
                 self.changing_gravity = not self.changing_gravity
+            if self.change_to:
+                self.engine_sound.delete()
+                self.engine_sound = False
 
     def update(self):
         if self.changing_gravity:
@@ -291,6 +309,12 @@ class Menu(GameState):
         self.game1_hs_button.update()
         self.game2_hs_button.update()
         self.gravity_button.update()
+        # update sound fx
+        if self.engine_sound:
+            self.engine_sound.pitch = mapFromTo(
+                abs(self.player.wheels[0].body.angular_velocity),
+                0, (self.player.speed+4), 0.2, 1.2
+            )
 ###############################################################################
 class Game1(GameState):
     id = 4
@@ -346,7 +370,8 @@ class Game1(GameState):
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
-        self.engine_sound = EngineSound()
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.volume = 0.8
         self.engine_sound.play()
     
     def on_mouse_press(self, x, y, button, modifier):
@@ -462,7 +487,8 @@ class Game2(GameState):
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
-        self.engine_sound = EngineSound()
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.volume = 0.8
         self.engine_sound.play()
     
     def on_mouse_press(self, x, y, button, modifier):
@@ -574,6 +600,10 @@ class HighScore(GameState):
         self.window.push_handlers(*self.event_handlers)
 
         self.update_hs_text()
+        # sound fx ############################################################
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.volume = 0.4
+        self.engine_sound.play()
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
@@ -585,6 +615,12 @@ class HighScore(GameState):
         self.obstacles.update()
         self.score_scroll.update()
         self.name_scroll.update()
+        # update sound fx
+        if self.engine_sound:
+            self.engine_sound.pitch = mapFromTo(
+                abs(self.player.wheels[0].body.angular_velocity),
+                0, (self.player.speed+4), 0.2, 1.2
+            )
 
     def update_hs_text(self): # 38 chars
         self.scores_text = ''
@@ -600,7 +636,9 @@ class HighScore(GameState):
     def on_mouse_press(self, x, y, button, modifiers):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-           self.change_to = Menu.id
+            self.engine_sound.delete()
+            self.engine_sound = False
+            self.change_to = Menu.id
 ###############################################################################
 class Endgame(GameState):
     id = 2
@@ -690,6 +728,10 @@ class Endgame(GameState):
         self.window.push_handlers(*self.event_handlers)
 
         self.update_hs_text()
+        # sound fx ############################################################
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.volume = 0.4
+        self.engine_sound.play()
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
@@ -702,6 +744,12 @@ class Endgame(GameState):
         self.enter_button.update()
         self.score_scroll.update()
         self.name_scroll.update()
+        # update sound fx
+        if self.engine_sound:
+            self.engine_sound.pitch = mapFromTo(
+                abs(self.player.wheels[0].body.angular_velocity),
+                0, (self.player.speed+4), 0.2, 1.2
+            )
 
     def update_hs_text(self): # 38 chars
         self.scores_text = ''
@@ -717,9 +765,11 @@ class Endgame(GameState):
     def on_mouse_press(self, x, y, button, modifiers):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-           if self.userinput:
-               self.__name_entered()
-           self.change_to = Menu.id
+            if self.userinput:
+                self.__name_entered()
+            self.engine_sound.delete()
+            self.engine_sound = False
+            self.change_to = Menu.id
         elif self.userinput:
             self.userinput.caret.on_mouse_press(x, y, button, modifiers)
 
