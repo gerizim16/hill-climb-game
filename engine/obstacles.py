@@ -36,7 +36,7 @@ class Obstacles(object):
                     obstacle_shape = pymunk.Poly(obstacle_body, pymunk_coords)
                     obstacle_shape.filter = pymunk.ShapeFilter(categories=0b0000100, mask=0b1111111)
                     obstacle_shape.elasticity = 0.7
-                    obstacle_shape.friction = 0.85
+                    obstacle_shape.friction = 0.9
                     self.obstacle_bodies.append(obstacle_body)
                     self.obstacle_shapes.append(obstacle_shape)
 
