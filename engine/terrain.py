@@ -7,7 +7,8 @@ import pymunk
 
 class Terrain(object):
     def __init__(self, batch, space, window, interval=100, mid_height=360, 
-                 height_change=0.65, end_coordinate=30000, color_set='green'):
+                 height_change=0.65, end_coordinate=30000, color_set='green',
+                 group=None):
         if color_set == 'green':
             color1 = (78, 51, 0)*2 + (0, 145, 48)*2
             color2 = (78, 51, 0)*2 + (0, 78, 26)*2
@@ -44,7 +45,7 @@ class Terrain(object):
             self.terrain_shapes.append(terrain_shape)
 
             self.terrain_primitives.append(self.batch.add_indexed(
-                4, pyglet.gl.GL_TRIANGLES, None,
+                4, pyglet.gl.GL_TRIANGLES, group,
                 [0, 1, 3, 1, 2, 3],
                 ('v2f', (*coord1, *coord2, coord2[0], 0, coord1[0], 0)),
                 ('c3B', color1 if i%2 == 0 else color2)

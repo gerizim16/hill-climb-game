@@ -2,7 +2,8 @@ import pyglet
 
 
 class TextInput(object):
-    def __init__(self, batch, position, width, font_size=14):
+    def __init__(self, batch, position, width, font_size=14,
+                 group=None):
         x, y = position
         self.document = pyglet.text.document.UnformattedDocument('')
         self.document.set_style(0, len(self.document.text), dict(
@@ -14,7 +15,8 @@ class TextInput(object):
         height = font.ascent - font.descent
 
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, width, height, multiline=False, batch=batch)
+            self.document, width, height, multiline=False, batch=batch,
+            group=group)
         self.layout.x = x
         self.layout.y = y
 
@@ -22,7 +24,7 @@ class TextInput(object):
 
         pad = 5
         self.background = batch.add_indexed(
-            4, pyglet.gl.GL_TRIANGLES, None,
+            4, pyglet.gl.GL_TRIANGLES, group,
             [0, 1, 3, 1, 2, 3],
             ('v2f', (x-pad, y-pad, 
                      x-pad, y+height+pad, 

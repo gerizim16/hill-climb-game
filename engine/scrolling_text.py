@@ -4,7 +4,7 @@ import pyglet
 class ScrollingText(pyglet.text.layout.ScrollableTextLayout):
     def __init__(self, batch, position, width, height, text='', 
                  align='left', timeout=60*3, font_size=20, scroll_speed=1,
-                 group=pyglet.graphics.OrderedGroup(2)):
+                 group=None):
         document = pyglet.text.document.UnformattedDocument(text)
         document.set_style(0, len(document.text), dict(
             font_size=font_size,
@@ -21,7 +21,7 @@ class ScrollingText(pyglet.text.layout.ScrollableTextLayout):
 
         pad = 5
         self.background = batch.add_indexed(
-            4, pyglet.gl.GL_TRIANGLES, None,
+            4, pyglet.gl.GL_TRIANGLES, group,
             [0, 1, 3, 1, 2, 3],
             ('v2f', (self.x-pad, self.y-pad, 
                      self.x-pad, self.y+height+pad, 

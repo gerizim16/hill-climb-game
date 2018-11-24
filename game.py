@@ -25,8 +25,8 @@ from engine.engine_sound import EngineSound
 #             buttons
 
 def mapFromTo(x, a, b, c, d):
-   y=(x-a)/(b-a)*(d-c)+c
-   return y
+    y=(x-a)/(b-a)*(d-c)+c
+    return y
 
 class Window(pyglet.window.Window):
     def __init__(self, width, height, caption, resizeable):
@@ -190,7 +190,8 @@ class Menu(GameState):
         self.event_handlers.extend(self.player.event_handlers)
         self.terrain1 = Terrain(self.batch, self.space, self.window,
                                 mid_height=150, end_coordinate=1480,
-                                color_set=choice(('green', 'gray')))
+                                color_set=choice(('green', 'gray')),
+                                group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=40,
             amount=2, x_offset=1600)
@@ -305,7 +306,8 @@ class Game1(GameState):
             (window.width//2-120, 550), add_boxlives=True)
         self.event_handlers.extend(self.tank1.event_handlers)
         self.terrain1 = Terrain(self.batch, self.space, self.window,
-            interval=120, mid_height=200, height_change=0.5)
+            interval=120, mid_height=200, height_change=0.5,
+            group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window, amount=3)
         # left bound
         bounds_body = pymunk.Body(body_type=pymunk.Body.STATIC)
@@ -419,7 +421,8 @@ class Game2(GameState):
             (window.width//2-120, 550))
         self.event_handlers.extend(self.motorbike.event_handlers)
         self.terrain1 = Terrain(self.batch, self.space, self.window,
-            interval=120, mid_height=170, height_change=0.3, color_set='gray')
+            interval=120, mid_height=170, height_change=0.3, color_set='gray',
+            group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window, 
             radius_range=(10, 20), frequency=150, amount=1)
         # left bound
@@ -438,18 +441,18 @@ class Game2(GameState):
         # motor meter sprite
         self.motor_sprite_bg = pyglet.sprite.Sprite(
             img=resources.circle_meter_img,
-            x=self.window.width//2-320, y=50, batch=self.batch)
+            x=self.window.width//2-320, y=50, batch=self.batch, group=self.midground)
         self.motor_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2-320, y=50, batch=self.batch)
+            x=self.window.width//2-320, y=50, batch=self.batch, group=self.foreground)
         self.motor_sprite.rotation = -25
         self.motor_sprite_bg.scale = 0.5
         self.motor_sprite.scale = 0.5
         # speed meter sprite
         self.speed_sprite_bg = pyglet.sprite.Sprite(
             img=resources.circle_meter_img,
-            x=self.window.width//2+320, y=50, batch=self.batch)
+            x=self.window.width//2+320, y=50, batch=self.batch, group=self.midground)
         self.speed_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2+320, y=50, batch=self.batch)
+            x=self.window.width//2+320, y=50, batch=self.batch, group=self.foreground)
         self.speed_sprite.rotation = -25
         self.speed_sprite_bg.scale = 0.5
         self.speed_sprite.scale = 0.5
@@ -541,7 +544,8 @@ class HighScore(GameState):
             color_set = 'gray'
         self.terrain1 = Terrain(self.batch, self.space, self.window,
                                 mid_height=400, end_coordinate=1480, 
-                                color_set=color_set)
+                                color_set=color_set,
+                                group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
             amount=1, x_offset=1600, mid_height=450)
@@ -559,9 +563,9 @@ class HighScore(GameState):
                                batch=self.batch, group=self.foreground)
         # scrolling hs ########################################################
         self.score_scroll = ScrollingText(self.batch, (325, 100-70), 290-210,
-            300, self.scores_text, align='right')
+            300, self.scores_text, align='right', group=self.foreground)
         self.name_scroll = ScrollingText(self.batch, (325+100, 100-70), 290+200,
-            300, self.names_text)
+            300, self.names_text, group=self.foreground)
         #######################################################################
         self.event_handlers.extend((
             self.on_mouse_press,
@@ -623,7 +627,7 @@ class Endgame(GameState):
             color_set = 'gray'
         self.terrain1 = Terrain(self.batch, self.space, self.window,
                                 mid_height=400, end_coordinate=1480, 
-                                color_set=color_set)
+                                color_set=color_set, group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
             amount=1, x_offset=1600, mid_height=450)
@@ -665,11 +669,12 @@ class Endgame(GameState):
                            )
         # scrolling hs ########################################################
         self.score_scroll = ScrollingText(self.batch, (655, 100), 290-210,
-            300, self.scores_text, align='right')
+            300, self.scores_text, align='right', group=self.foreground)
         self.name_scroll = ScrollingText(self.batch, (655+100, 100), 290+200,
-            300, self.names_text)
+            300, self.names_text, group=self.foreground)
         # userinput ###########################################################
-        self.userinput = TextInput(self.batch, (30, 100), 440, 26)
+        self.userinput = TextInput(self.batch, (30, 100), 440, 26, 
+                                   group=self.foreground)
         #######################################################################
         self.event_handlers.extend((
             self.on_mouse_motion,

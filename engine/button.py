@@ -6,8 +6,8 @@ import pyglet
 
 class Button(pymunk.Body):
     def __init__(self, batch, id, position, img, dimensions, 
-            body_type=pymunk.Body.DYNAMIC, sensor=False, 
-            group=pyglet.graphics.OrderedGroup(2)):
+                 body_type=pymunk.Body.DYNAMIC, sensor=False, 
+                 group=pyglet.graphics.OrderedGroup(2)):
         super().__init__(1)
         self.COLLTYPE_BUTTON = 3
         self.id = id
@@ -28,7 +28,7 @@ class Button(pymunk.Body):
         self.button_shape.id = id
         self.sprite = pyglet.sprite.Sprite(img, x=self.position.x, y=self.position.y,
             batch=batch, group=group)
-    
+
     def update(self, x_offset=0):
         if self.update_rotate:
             self.sprite.update(
