@@ -22,7 +22,7 @@ class Button(pymunk.Body):
             self.button_shape = pymunk.Circle(self, dimensions)
         self.button_shape.sensor = sensor
         self.button_shape.filter = pymunk.ShapeFilter(categories=0b0000001, mask=0b1111111)
-        self.button_shape.elasticity = 1
+        self.button_shape.elasticity = 1.3
         self.button_shape.friction = 0.8
         self.button_shape.collision_type = self.COLLTYPE_BUTTON
         self.button_shape.id = id

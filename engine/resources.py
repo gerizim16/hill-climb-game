@@ -70,6 +70,9 @@ images.append(menu_button_img)
 gravity_button_img = pyglet.resource.image('gravity.png')
 images.append(gravity_button_img)
 
+fullscreen_button_img = pyglet.resource.image('fullscreen.png')
+images.append(fullscreen_button_img)
+
 restart_button_img = pyglet.resource.image('restart_button.png')
 images.append(restart_button_img)
 

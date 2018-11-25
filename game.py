@@ -24,17 +24,13 @@ from engine.sound_loop import SoundLoop
 #             floor, obstacles, tank boxlives, 
 #             buttons
 
-def mapFromTo(x, a, b, c, d):
-    y=(x-a)/(b-a)*(d-c)+c
-    return y
-
 class Window(pyglet.window.Window):
     def __init__(self, width, height, caption, resizeable):
         super().__init__(width, height, caption, resizeable)
         self.main_batch = pyglet.graphics.Batch()
         self.space = pymunk.Space()
         # self.space = pymunk.Space(threaded=True) # only for non windows os
-        # self.space.threads = 2 # only for non windows os
+        # self.space.threads = 4 # only for non windows os
         self.space.gravity = 0, -900
 
         self.activated_mode = Menu(self.main_batch, self.space, self)
@@ -204,7 +200,7 @@ class Menu(GameState):
                                     (self.window.width//2-350, 620))
         self.event_handlers.extend(self.player.event_handlers)
         self.terrain1 = Terrain(self.batch, self.space, self.window,
-                                mid_height=150, end_coordinate=1480,
+                                mid_height=150, end_coordinate=self.window.width+200,
                                 color_set=choice(('green', 'gray')),
                                 group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
@@ -221,20 +217,21 @@ class Menu(GameState):
             (self.window.width//2+400, 700), resources.game2_hs_button_img, 60)
         self.gravity_button = Button(self.batch, 'gravity_button', 
             (self.window.width//2+500, 700), resources.gravity_button_img, 30)
+        self.fullscreen_button = Button(self.batch, 'fullscreen_button', 
+            (self.window.width//2+600, 700), resources.fullscreen_button_img, 60)
         #######################################################################
         self.space.add(
                   *self.game1_button.get_physical_object(),
                   *self.game2_button.get_physical_object(),
                   *self.game1_hs_button.get_physical_object(),
                   *self.game2_hs_button.get_physical_object(),
-                  *self.gravity_button.get_physical_object()
+                  *self.gravity_button.get_physical_object(),
+                  *self.fullscreen_button.get_physical_object()
                  )
 
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
-        self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.6
-        self.engine_sound.play()
+        self.player.engine_sound.volume = 0.6
 
     def on_mouse_hover(self, arbiter, space, data):
         button_shape, mouse_shape = arbiter.shapes
@@ -294,9 +291,11 @@ class Menu(GameState):
                 self.change_to = HighScore.id
             elif point_q.shape.body.id == self.gravity_button.id:
                 self.changing_gravity = not self.changing_gravity
+            elif point_q.shape.body.id == self.fullscreen_button.id:
+                self.window.set_fullscreen(not self.window.fullscreen)
+                self.change_to = Menu.id
             if self.change_to:
-                self.engine_sound.delete()
-                self.engine_sound = False
+                self.player.engine_sound.delete()
 
     def update(self):
         if self.changing_gravity:
@@ -321,12 +320,7 @@ class Menu(GameState):
         self.game1_hs_button.update()
         self.game2_hs_button.update()
         self.gravity_button.update()
-        # update sound fx
-        if self.engine_sound:
-            self.engine_sound.pitch = mapFromTo(
-                abs(self.player.wheels[0].body.angular_velocity),
-                0, (self.player.speed+4), 0.2, 1.2
-            )
+        self.fullscreen_button.update()
 ###############################################################################
 class Game1(GameState):
     id = 4
@@ -358,7 +352,7 @@ class Game1(GameState):
         self.score_label = pyglet.text.Label('',
                                             # font_name='Times New Roman',
                                             font_size=36,
-                                            x=840, y=610,
+                                            x=self.window.width-440, y=self.window.height-110,
                                             color=(0,0,0,255),
                                             anchor_x='right', anchor_y='baseline',
                                             batch=self.batch,
@@ -386,43 +380,36 @@ class Game1(GameState):
         self.speed_sprite_bg.scale = 0.5
         self.speed_sprite.scale = 0.5
         # goal sprite
-        self.goalmeter = GoalSprite(self.batch, (1050, 640), self.background)
+        self.goalmeter = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
-        self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.8
-        self.engine_sound.play()
+        self.tank1.engine_sound.volume = 0.9
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-           self.engine_sound.delete()
-           self.engine_sound = False
+           self.tank1.engine_sound.delete()
            self.change_to = Menu.id
         else:
             x += self.tank1.position[0]-400
             point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
             if point_q:
                 if point_q.shape.body.id == self.restart_button.id:
-                    self.engine_sound.delete()
-                    self.engine_sound = False
+                    self.tank1.engine_sound.delete()
                     self.change_to = Game1.id
 
     def update(self):
         # update variables
         self.time += 1/60
-        try:
-            score = 200-(self.time/(self.tank1.lives))
-        except ZeroDivisionError:
-            score = 0
+        score = -self.time + self.tank1.lives*10 + 130
         self.score_label.text = '{:.1f} pts'.format(score)
         offset = self.tank1.position[0]-400
         self.current_score = self.tank1.position[0]//60-12
 
         # if player is dead 
-        if not self.ENDGAME and self.tank1.lives == 0:
+        if not self.ENDGAME and (self.tank1.lives == 0 or score < 0):
             self.ENDGAME = True
             # create restart button ###########################################
             self.restart_button = Button(self.batch, 'restart_button', 
@@ -435,8 +422,7 @@ class Game1(GameState):
             self.tank1.torque = 0
             self.kwargs['score'] = score
             self.kwargs['game'] = self.name
-            self.engine_sound.delete()
-            self.engine_sound = False
+            self.tank1.engine_sound.delete()
             self.change_to = Endgame.id
 
         # update sprites 
@@ -444,12 +430,6 @@ class Game1(GameState):
         self.motor_sprite.update(rotation=-25 + abs(self.tank1.wheels[0].body.angular_velocity)*1.8)
         self.speed_sprite.update(rotation=-25 + abs(self.tank1.chassis.body.velocity.x)*0.4)
         self.goalmeter.update(self.tank1.position[0]/self.end_position)
-        # update sound fx
-        if self.engine_sound:
-            self.engine_sound.pitch = mapFromTo(
-                abs(self.tank1.wheels[0].body.angular_velocity),
-                0, (self.tank1.speed+4), 0.2, 1.2
-            )
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
@@ -488,7 +468,7 @@ class Game2(GameState):
         self.time_label = pyglet.text.Label('',
                                             # font_name='Times New Roman',
                                             font_size=36,
-                                            x=840, y=610,
+                                            x=self.window.width-440, y=self.window.height-110,
                                             color=(0,0,0,255),
                                             anchor_x='right', anchor_y='baseline',
                                             batch=self.batch,
@@ -516,20 +496,17 @@ class Game2(GameState):
         self.speed_sprite_bg.scale = 0.5
         self.speed_sprite.scale = 0.5
         # goal sprite
-        self.goalmeter = GoalSprite(self.batch, (1050, 640), group=self.background)
+        self.goalmeter = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), group=self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
-        self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.8
-        self.engine_sound.play()
+        self.motorbike.engine_sound.volume = 0.8
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-            self.engine_sound.delete()
-            self.engine_sound = False
+            self.motorbike.engine_sound.delete()
             self.change_to = Menu.id
         else:
             x += self.motorbike.position[0]-400
@@ -537,8 +514,7 @@ class Game2(GameState):
             point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
             if point_q:
                 if point_q.shape.body.id == self.restart_button.id:
-                    self.engine_sound.delete()
-                    self.engine_sound = False
+                    self.motorbike.engine_sound.delete()
                     self.change_to = Game1.id
 
     def update(self):
@@ -562,8 +538,7 @@ class Game2(GameState):
             self.motorbike.torque = 0
             self.kwargs['score'] = self.time
             self.kwargs['game'] = self.name
-            self.engine_sound.delete()
-            self.engine_sound = False
+            self.motorbike.engine_sound.delete()
             self.change_to = Endgame.id
 
         # update sprites 
@@ -571,12 +546,6 @@ class Game2(GameState):
         self.motor_sprite.update(rotation=-25 + abs(self.motorbike.wheels[0].body.angular_velocity)*6.7)
         self.speed_sprite.update(rotation=-25 + abs(self.motorbike.chassis.body.velocity.x)*0.2)
         self.goalmeter.update(self.motorbike.position[0]/self.end_position)
-        # update sound fx
-        if self.engine_sound:
-            self.engine_sound.pitch = mapFromTo(
-                abs(self.motorbike.wheels[0].body.angular_velocity),
-                0, (self.motorbike.speed+4), 1, 3
-            )
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
@@ -604,7 +573,7 @@ class HighScore(GameState):
                                (self.window.width//2, 600))
             color_set = 'gray'
         self.terrain1 = Terrain(self.batch, self.space, self.window,
-                                mid_height=400, end_coordinate=1480, 
+                                mid_height=400, end_coordinate=self.window.width+200, 
                                 color_set=color_set,
                                 group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
@@ -636,9 +605,7 @@ class HighScore(GameState):
 
         self.update_hs_text()
         # sound fx ############################################################
-        self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.6
-        self.engine_sound.play()
+        self.player.engine_sound.volume = 0.6
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
@@ -650,12 +617,6 @@ class HighScore(GameState):
         self.obstacles.update()
         self.score_scroll.update()
         self.name_scroll.update()
-        # update sound fx
-        if self.engine_sound:
-            self.engine_sound.pitch = mapFromTo(
-                abs(self.player.wheels[0].body.angular_velocity),
-                0, (self.player.speed+4), 0.2, 1.2
-            )
 
     def update_hs_text(self): # 38 chars
         self.scores_text = ''
@@ -671,8 +632,7 @@ class HighScore(GameState):
     def on_mouse_press(self, x, y, button, modifiers):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-            self.engine_sound.delete()
-            self.engine_sound = False
+            self.player.engine_sound.delete()
             self.change_to = Menu.id
 ###############################################################################
 class Endgame(GameState):
@@ -701,7 +661,7 @@ class Endgame(GameState):
                                (self.window.width//2, 600))
             color_set = 'gray'
         self.terrain1 = Terrain(self.batch, self.space, self.window,
-                                mid_height=400, end_coordinate=1480, 
+                                mid_height=400, end_coordinate=self.window.width+200, 
                                 color_set=color_set, group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
@@ -766,9 +726,7 @@ class Endgame(GameState):
 
         self.update_hs_text()
         # sound fx ############################################################
-        self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.6
-        self.engine_sound.play()
+        self.player.engine_sound.volume = 0.6
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
@@ -781,12 +739,6 @@ class Endgame(GameState):
         self.enter_button.update()
         self.score_scroll.update()
         self.name_scroll.update()
-        # update sound fx
-        if self.engine_sound:
-            self.engine_sound.pitch = mapFromTo(
-                abs(self.player.wheels[0].body.angular_velocity),
-                0, (self.player.speed+4), 0.2, 1.2
-            )
 
     def update_hs_text(self): # 38 chars
         self.scores_text = ''
@@ -804,8 +756,7 @@ class Endgame(GameState):
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
             if self.userinput:
                 self.__name_entered()
-            self.engine_sound.delete()
-            self.engine_sound = False
+            self.player.engine_sound.delete()
             self.change_to = Menu.id
         elif self.userinput:
             self.userinput.caret.on_mouse_press(x, y, button, modifiers)
