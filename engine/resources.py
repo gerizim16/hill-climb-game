@@ -94,6 +94,9 @@ images.append(goal_meter_img)
 bg_goal_meter_img = pyglet.resource.image('bg_goal_meter.png')
 images.append(bg_goal_meter_img)
 
+background_img = pyglet.resource.image('background.png')
+images.append(background_img)
+
 for image in images:
     center_image(image)
 

@@ -59,7 +59,7 @@ class Window(pyglet.window.Window):
                     self.width, 0,
                     self.width, self.height,
                     0, self.height)),
-            ('c3B', (255, 255, 255)*2 + (10, 84, 152)*2)
+            ('c3B', (255, 255, 255)*2 + (10, 84, 152) + (222, 201, 47))
         )
         # self.space.debug_draw(self.options) # debugging
         self.main_batch.draw()
@@ -190,7 +190,10 @@ class Menu(GameState):
         super().__init__(batch, space, window, mouse_hover=True, bounded=True)
         self.changing_gravity = True
         self.adder = [5, 5]
-
+        self.bg = pyglet.sprite.Sprite(
+            img=resources.background_img,
+            x=self.window.width//2, y=self.window.height//2+100, batch=self.batch
+        )
         self.event_handlers.append(self.on_mouse_press)
         # objects #############################################################
         if choice((1, 2)) == 1:
@@ -206,7 +209,7 @@ class Menu(GameState):
                                 group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=40,
-            amount=2, x_offset=1600)
+            amount=2, x_offset=1600, group=self.background)
         # buttons #############################################################
         self.game1_button = Button(self.batch, 'game1_button', 
             (self.window.width//2-100, 700), resources.game1_button_img, 60)
