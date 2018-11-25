@@ -7,7 +7,8 @@ import pymunk
 
 class Obstacles(object):
     def __init__(self, batch, space, window, end_coordinate=30000, radius_range=(10, 40), 
-                 mass=1, frequency=125, amount=4, x_offset=0, mid_height=380):
+                 mass=1, frequency=125, amount=4, x_offset=0, mid_height=380,
+                 group=None):
         self.batch = batch
         self.space = space
         self.window = window
@@ -45,7 +46,7 @@ class Obstacles(object):
                         pyglet_coords.extend(coord)
 
                     self.obstacle_primitives.append(self.batch.add_indexed(
-                        6, pyglet.gl.GL_TRIANGLES, None,
+                        6, pyglet.gl.GL_TRIANGLES, group,
                         [0, 1, 5, 1, 2, 5, 2, 4, 5, 2, 3, 4],
                         ('v2f', pyglet_coords),
                         ('c3B', color*2)
