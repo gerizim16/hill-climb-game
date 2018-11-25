@@ -95,17 +95,17 @@ class Window(pyglet.window.Window):
                 self.bg_music.volume = 0.1
                 self.activated_mode = Game2(self.main_batch, self.space, self)
             elif new_mode == Menu.id:
-                self.bg_music.volume = 0.7
+                self.bg_music.volume = 0.6
                 self.activated_mode = Menu(self.main_batch, self.space, self)
             elif new_mode == Endgame.id:
-                self.bg_music.volume = 0.7
+                self.bg_music.volume = 0.6
                 self.activated_mode = Endgame(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
             elif new_mode == HighScore.id:
-                self.bg_music.volume = 0.7
+                self.bg_music.volume = 0.6
                 self.activated_mode = HighScore(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
 
-    # def on_mouse_press(self, x, y, button, modifier):
-    #     print(x, y, button, modifier)
+    def on_mouse_press(self, x, y, button, modifier):
+        print(x, y, button, modifier)
 
 # MENU AND GAME MODES #########################################################
 class GameState(object):
@@ -120,6 +120,7 @@ class GameState(object):
         self.background = pyglet.graphics.OrderedGroup(0)
         self.midground = pyglet.graphics.OrderedGroup(1)
         self.foreground = pyglet.graphics.OrderedGroup(2)
+        self.front = pyglet.graphics.OrderedGroup(3)
 
         self.buttons = pymunk.ShapeFilter(mask=0b0000001)
 
@@ -229,7 +230,7 @@ class Menu(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.4
+        self.engine_sound.volume = 0.6
         self.engine_sound.play()
 
     def on_mouse_hover(self, arbiter, space, data):
@@ -238,18 +239,22 @@ class Menu(GameState):
             self.game1_button.update_rotate = False
             self.game1_button.sprite.rotation = 0
             self.game1_button.sprite.image = resources.game1_button_hover_img
+            self.game1_button.sprite.group = self.front
         elif button_shape.id == self.game2_button.id:
             self.game2_button.update_rotate = False
             self.game2_button.sprite.rotation = 0
             self.game2_button.sprite.image = resources.game2_button_hover_img
+            self.game2_button.sprite.group = self.front
         elif button_shape.id == self.game1_hs_button.id:
             self.game1_hs_button.update_rotate = False
             self.game1_hs_button.sprite.rotation = 0
             self.game1_hs_button.sprite.image = resources.game1_hs_button_hover_img
+            self.game1_hs_button.sprite.group = self.front
         elif button_shape.id == self.game2_hs_button.id:
             self.game2_hs_button.update_rotate = False
             self.game2_hs_button.sprite.rotation = 0
             self.game2_hs_button.sprite.image = resources.game2_hs_button_hover_img
+            self.game2_hs_button.sprite.group = self.front
         return True
 
     def on_mouse_unhover(self, arbiter, space, data):
@@ -257,15 +262,19 @@ class Menu(GameState):
         if button_shape.id == self.game1_button.id:
             self.game1_button.update_rotate = True
             self.game1_button.sprite.image = resources.game1_button_img
+            self.game1_button.sprite.group = self.foreground
         elif button_shape.id == self.game2_button.id:
             self.game2_button.update_rotate = True
             self.game2_button.sprite.image = resources.game2_button_img
+            self.game2_button.sprite.group = self.foreground
         elif button_shape.id == self.game1_hs_button.id:
             self.game1_hs_button.update_rotate = True
             self.game1_hs_button.sprite.image = resources.game1_hs_button_img
+            self.game1_hs_button.sprite.group = self.foreground
         elif button_shape.id == self.game2_hs_button.id:
             self.game2_hs_button.update_rotate = True
             self.game2_hs_button.sprite.image = resources.game2_hs_button_img
+            self.game2_hs_button.sprite.group = self.foreground
 
     def on_mouse_press(self, x, y, button, modifier):
         point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
@@ -342,6 +351,15 @@ class Game1(GameState):
         # buttons #############################################################
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
             x=55, y=self.window.height-35, batch=self.batch)
+        # labels ##############################################################
+        self.score_label = pyglet.text.Label('',
+                                            # font_name='Times New Roman',
+                                            font_size=36,
+                                            x=840, y=610,
+                                            color=(0,0,0,255),
+                                            anchor_x='right', anchor_y='baseline',
+                                            batch=self.batch,
+                                            )
         # sprites #############################################################
         # finish flag sprite
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
@@ -382,7 +400,6 @@ class Game1(GameState):
            self.change_to = Menu.id
         else:
             x += self.tank1.position[0]-400
-            print(x, y)
             point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
             if point_q:
                 if point_q.shape.body.id == self.restart_button.id:
@@ -393,6 +410,8 @@ class Game1(GameState):
     def update(self):
         # update variables
         self.time += 1/60
+        score = 200-(self.time/(self.tank1.lives+1))
+        self.score_label.text = '{:.1f} pts'.format(score)
         offset = self.tank1.position[0]-400
         self.current_score = self.tank1.position[0]//60-12
 
@@ -408,7 +427,7 @@ class Game1(GameState):
         # if player won
         if self.tank1.position[0] > self.end_position:
             self.tank1.torque = 0
-            self.kwargs['score'] = self.time
+            self.kwargs['score'] = score
             self.kwargs['game'] = self.name
             self.engine_sound.delete()
             self.engine_sound = False
@@ -459,6 +478,15 @@ class Game2(GameState):
         # buttons #############################################################
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
             x=55, y=self.window.height-35, batch=self.batch)
+        # labels ##############################################################
+        self.time_label = pyglet.text.Label('',
+                                            # font_name='Times New Roman',
+                                            font_size=36,
+                                            x=840, y=610,
+                                            color=(0,0,0,255),
+                                            anchor_x='right', anchor_y='baseline',
+                                            batch=self.batch,
+                                            )
         # sprites #############################################################
         # finish flag sprite
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
@@ -510,6 +538,7 @@ class Game2(GameState):
     def update(self):
         # update variables
         self.time += 1/60
+        self.time_label.text = '{:.1f} s'.format(self.time)
         offset = self.motorbike.position[0]-400
         self.current_score = self.motorbike.position[0]//60-12
 
@@ -602,7 +631,7 @@ class HighScore(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.4
+        self.engine_sound.volume = 0.6
         self.engine_sound.play()
 
     def update(self):
@@ -648,8 +677,10 @@ class Endgame(GameState):
         self.game = kwargs.get('game')
         self.choice = 0
 
-        if self.game in (Game1.name, Game2.name):
+        if self.game == Game2.name:
             self.units = ' s'
+        elif self.game  == Game1.name:
+            self.units = ' pts'
         else:
             self.units = ''
         self.names_text = 'None'
@@ -730,7 +761,7 @@ class Endgame(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.engine_sound = SoundLoop(resources.engine_sfx)
-        self.engine_sound.volume = 0.4
+        self.engine_sound.volume = 0.6
         self.engine_sound.play()
 
     def update(self):
@@ -808,11 +839,15 @@ class Endgame(GameState):
             self.enter_button.sprite.image = resources.enter_button_img
 
     def __name_entered(self):
+        if self.game == Game1.name:
+            ascending = False
+        if self.game == Game2.name:
+            ascending = True
         add_highscore(
             '{}.csv'.format(self.game), 
             self.userinput.document.text,
             self.score,
-            ascending=True
+            ascending=ascending
         )
         del self.userinput
         self.userinput = None
