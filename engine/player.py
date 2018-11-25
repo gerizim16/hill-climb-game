@@ -6,7 +6,11 @@ import pymunk
 
 from . import resources
 from .physical_object import PhysicalObject
+from .sound_loop import SoundLoop
 
+def mapFromTo(x, a, b, c, d):
+    y=(x-a)/(b-a)*(d-c)+c
+    return y
 
 class Vehicle(object):
     def __init__(self, batch, space, window, position, side='left', 
@@ -22,6 +26,9 @@ class Vehicle(object):
         self.side = 1 if side == 'left' else -1
         self.torque = torque
         self.speed = speed
+        self.engine_sound = None
+        self.min_pitch = 1
+        self.max_pitch = 1
 
         self.chassis = None
         self.wheels = []
@@ -43,6 +50,11 @@ class Vehicle(object):
         self.position = self.chassis.body.position
         for physical_object in self.physical_objects:
             physical_object.update(x_offset)
+        if self.engine_sound:
+            self.engine_sound.pitch = mapFromTo(
+                abs(self.wheels[0].body.angular_velocity),
+                0, (self.speed+4), self.min_pitch, self.max_pitch
+            )
 
     def forward(self, torque=300000, speed=30*pi):
         for motor in self.motors:
@@ -69,6 +81,7 @@ class Vehicle(object):
             self.reverse(self.torque, self.speed)
 
 class Tank(Vehicle):
+    name = 'tank'
     def __init__(self, batch, space, window, position, side='left', 
                  add_boxlives=False, torque=300000, speed=40*pi):
         super().__init__(batch, space, window, position, side=side,
@@ -86,6 +99,10 @@ class Tank(Vehicle):
             self.COLLTYPE_SENSOR).separate = self.boxlife_coll_sep
 
         self.space.add(self.get_physical_object())
+
+        self.min_pitch, self.max_pitch = 0.2, 1.2
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.play()
 
     def boxlife_coll_sep(self, arbiter, space, data):
         boxlife_shape, sensor_shape = arbiter.shapes # box, sensor
@@ -293,6 +310,7 @@ class Tank(Vehicle):
             self.constraints.append(thread_joint)
 
 class MotorBike(Vehicle):
+    name = 'motorbike'
     def __init__(self, batch, space, window, position, side='left', 
                  torque=120000, speed=11*pi):
         super().__init__(batch, space, window, position, side=side,
@@ -302,6 +320,10 @@ class MotorBike(Vehicle):
 
         self.event_handlers = (self.on_key_press, self.on_key_release)
         self.space.add(self.get_physical_object())
+
+        self.min_pitch, self.max_pitch = 1, 3
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.play()
 
     def on_key_release(self, symbol, modifiers):
         if symbol in (key.D, key.A):
