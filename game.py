@@ -195,10 +195,10 @@ class Menu(GameState):
         # objects #############################################################
         if choice((1, 2)) == 1:
             self.player = Tank(self.batch, self.space, self.window,
-                               (self.window.width//2, 620), side='left')
+                               (self.window.width//2-350, 620), side='left')
         else:
             self.player = MotorBike(self.batch, self.space, self.window,
-                                    (self.window.width//2, 620))
+                                    (self.window.width//2-350, 620))
         self.event_handlers.extend(self.player.event_handlers)
         self.terrain1 = Terrain(self.batch, self.space, self.window,
                                 mid_height=150, end_coordinate=1480,
@@ -209,15 +209,15 @@ class Menu(GameState):
             amount=2, x_offset=1600)
         # buttons #############################################################
         self.game1_button = Button(self.batch, 'game1_button', 
-            (self.window.width//2-580, 700), resources.game1_button_img, 60)
+            (self.window.width//2-100, 700), resources.game1_button_img, 60)
         self.game2_button = Button(self.batch, 'game2_button', 
-            (self.window.width//2-440, 700), resources.game2_button_img, 60)
+            (self.window.width//2+50, 700), resources.game2_button_img, 60)
         self.game1_hs_button = Button(self.batch, 'game1_hs_button', 
-            (self.window.width//2-300, 700), resources.game1_hs_button_img, 60)
+            (self.window.width//2+250, 700), resources.game1_hs_button_img, 60)
         self.game2_hs_button = Button(self.batch, 'game2_hs_button', 
-            (self.window.width//2-160, 700), resources.game2_hs_button_img, 60)
+            (self.window.width//2+400, 700), resources.game2_hs_button_img, 60)
         self.gravity_button = Button(self.batch, 'gravity_button', 
-            (self.window.width//2+320, 700), resources.gravity_button_img, 30)
+            (self.window.width//2+500, 700), resources.gravity_button_img, 30)
         #######################################################################
         self.space.add(
                   *self.game1_button.get_physical_object(),
@@ -410,7 +410,10 @@ class Game1(GameState):
     def update(self):
         # update variables
         self.time += 1/60
-        score = 200-(self.time/(self.tank1.lives+1))
+        try:
+            score = 200-(self.time/(self.tank1.lives))
+        except ZeroDivisionError:
+            score = 0
         self.score_label.text = '{:.1f} pts'.format(score)
         offset = self.tank1.position[0]-400
         self.current_score = self.tank1.position[0]//60-12
