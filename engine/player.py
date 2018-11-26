@@ -83,7 +83,7 @@ class Vehicle(object):
 class Tank(Vehicle):
     name = 'tank'
     def __init__(self, batch, space, window, position, side='left', 
-                 add_boxlives=False, torque=300000, speed=40*pi):
+                 add_boxlives=False, torque=300000, speed=40*pi, group=None):
         super().__init__(batch, space, window, position, side=side,
                          torque=torque, speed=speed)
         self.add_boxlives = add_boxlives
@@ -93,6 +93,8 @@ class Tank(Vehicle):
         self.boxlives = []
 
         self.__build_tank()
+        for sprite in self.sprites:
+            sprite.group = group
 
         self.lives = len(self.boxlives)
         self.space.add_collision_handler(self.COLLTYPE_BOXLIFE, 
@@ -141,6 +143,7 @@ class Tank(Vehicle):
                 img=resources.boxlife_img,
                 x=boxlife_body.position.x, y=boxlife_body.position.y, batch=self.batch)
             boxlife = PhysicalObject(boxlife_body, boxlife_sprite)
+            self.sprites.append(boxlife_sprite)
             self.bodies.append(boxlife_body)
             self.shapes.append(boxlife_shape)
             self.physical_objects.append(boxlife)
@@ -430,6 +433,7 @@ class MotorBike(Vehicle):
             img=resources.mb_holder_img, 
             x=holder_body.position.x, y=holder_body.position.y, batch=self.batch)
         holder = PhysicalObject(holder_body, holder_sprite, -9.46)
+        self.sprites.append(holder_sprite)
         self.bodies.append(holder_body)
         self.shapes.append(holder_shape)
         self.physical_objects.append(holder)
