@@ -9,8 +9,6 @@ class Obstacles(object):
     def __init__(self, batch, space, window, end_coordinate=30000, radius_range=(10, 40), 
                  mass=1, frequency=125, amount=4, x_offset=0, mid_height=380,
                  group=None):
-        self.offset = 0
-        self.alive = True
         self.batch = batch
         self.space = space
         self.window = window
@@ -53,20 +51,17 @@ class Obstacles(object):
                         ('v2f', pyglet_coords),
                         ('c3B', color*2)
                     ))
-        # self.update(update_all=True)
+        self.update(update_all=True)
         self.space.add(*self.get_physical_object())
 
     def get_physical_object(self):
         return self.obstacle_bodies + self.obstacle_shapes
 
-    def update(self, myb, parentb):
-        while self.alive:
-            myb.wait()
-            for i in range(len(self.obstacle_bodies)):
-                if -60 < self.obstacle_bodies[i].position.x-self.offset < self.window.width + 60:
-                    pyglet_coords = []
-                    for v in self.obstacle_shapes[i].get_vertices():
-                        x, y = v.rotated(self.obstacle_shapes[i].body.angle) + self.obstacle_shapes[i].body.position
-                        pyglet_coords.extend((x-self.offset, y))
-                    self.obstacle_primitives[i].vertices = pyglet_coords
-            parentb.wait()
+    def update(self, x_offset=0, update_all=False):
+        for i in range(len(self.obstacle_bodies)):
+            if -60 < self.obstacle_bodies[i].position.x-x_offset < self.window.width + 60 or update_all:
+                pyglet_coords = []
+                for v in self.obstacle_shapes[i].get_vertices():
+                    x, y = v.rotated(self.obstacle_shapes[i].body.angle) + self.obstacle_shapes[i].body.position
+                    pyglet_coords.extend((x-x_offset, y))
+                self.obstacle_primitives[i].vertices = pyglet_coords
