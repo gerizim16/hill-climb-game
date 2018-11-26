@@ -45,7 +45,6 @@ class Window(pyglet.window.Window):
         self.bg_music = SoundLoop(resources.bg_music)
         self.bg_music.play()
         #######################################################################
-
         pyglet.clock.schedule_interval(self.update, 1/60.0)
 
     def on_draw(self):
