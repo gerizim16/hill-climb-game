@@ -50,7 +50,7 @@ class Terrain(object):
                 ('v2f', (*coord1, *coord2, coord2[0], 0, coord1[0], 0)),
                 ('c3B', color1 if i%2 == 0 else color2)
             ))
-        # self.update(update_all=True)
+        self.update(x_offset=self.window.width//2-520, update_all=True)
         self.space.add(*self.get_physical_object())
 
     def get_physical_object(self):
@@ -59,7 +59,7 @@ class Terrain(object):
     def update(self, x_offset=0, update_all=False):
         for i in range(len(self.terrain_shapes)):
             vertices = self.terrain_shapes[i].get_vertices()
-            if -self.interval-120 < vertices[0][0]-x_offset < self.window.width+self.interval+30 or update_all:
+            if -self.interval-60 < vertices[0][0]-x_offset < self.window.width+self.interval+60 or update_all:
                 pyglet_coords = []
                 for v in vertices:
                     x, y = v
