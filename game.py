@@ -148,6 +148,7 @@ class GameState(object):
             bounds_shapes.extend((left_bound_s, right_bound_s, upper_bound_s))
             for shape in bounds_shapes:
                 shape.friction = 0.8
+                shape.elasticity = 1
                 shape.filter = bounds_filter
             ###################################################################
             self.space.add(bounds_body, *bounds_shapes)
@@ -184,7 +185,7 @@ class Menu(GameState):
     id = 1
     def __init__(self, batch, space, window):
         super().__init__(batch, space, window, mouse_hover=True, bounded=True)
-        self.changing_gravity = True
+        self.changing_gravity = False
         self.adder = [5, 5]
         self.bg = pyglet.sprite.Sprite(
             img=resources.background_img,
@@ -313,6 +314,7 @@ class Menu(GameState):
             self.space.gravity = gravityx+self.adder[0], gravityy+self.adder[1]
         else:
             self.space.gravity = 0, -900
+            self.space.gravity = 0, 0
         self.player.update()
         self.terrain1.update()
         self.obstacles.update()
