@@ -51,15 +51,14 @@ class Obstacles(object):
                         ('v2f', pyglet_coords),
                         ('c3B', color*2)
                     ))
-        self.update(update_all=True)
         self.space.add(*self.get_physical_object())
 
     def get_physical_object(self):
         return self.obstacle_bodies + self.obstacle_shapes
 
-    def update(self, x_offset=0, update_all=False):
+    def update(self, x_offset=0):
         for i in range(len(self.obstacle_bodies)):
-            if -60 < self.obstacle_bodies[i].position.x-x_offset < self.window.width + 60 or update_all:
+            if -60 < self.obstacle_bodies[i].position.x-x_offset < self.window.width + 60:
                 pyglet_coords = []
                 for v in self.obstacle_shapes[i].get_vertices():
                     x, y = v.rotated(self.obstacle_shapes[i].body.angle) + self.obstacle_shapes[i].body.position

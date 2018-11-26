@@ -50,7 +50,6 @@ class Terrain(object):
                 ('v2f', (*coord1, *coord2, coord2[0], 0, coord1[0], 0)),
                 ('c3B', color1 if i%2 == 0 else color2)
             ))
-        self.update(x_offset=self.window.width//2-520, update_all=True)
         self.space.add(*self.get_physical_object())
 
     def get_physical_object(self):

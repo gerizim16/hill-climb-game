@@ -339,6 +339,7 @@ class Game1(GameState):
         self.terrain1 = Terrain(self.batch, self.space, self.window,
             interval=50, mid_height=200, height_change=0.5,
             group=self.background)
+        self.terrain1.update(x_offset=self.window.width//2-520, update_all=True)
         self.obstacles = Obstacles(self.batch, self.space, self.window, amount=3)
         # left bound
         bounds_body = pymunk.Body(body_type=pymunk.Body.STATIC)
@@ -454,6 +455,7 @@ class Game2(GameState):
         self.terrain1 = Terrain(self.batch, self.space, self.window,
             interval=120, mid_height=170, height_change=0.3, color_set='gray',
             group=self.background)
+        self.terrain1.update(x_offset=self.window.width//2-520, update_all=True)
         self.obstacles = Obstacles(self.batch, self.space, self.window, 
             radius_range=(10, 20), frequency=150, amount=1)
         # left bound
