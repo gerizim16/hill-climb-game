@@ -59,7 +59,7 @@ class Terrain(object):
     def update(self, x_offset=0, update_all=False):
         for i in range(len(self.terrain_shapes)):
             vertices = self.terrain_shapes[i].get_vertices()
-            if -self.interval-40 < vertices[0][0]-x_offset < self.window.width+self.interval+30 or update_all:
+            if -self.interval-120 < vertices[0][0]-x_offset < self.window.width+self.interval+30 or update_all:
                 pyglet_coords = []
                 for v in vertices:
                     x, y = v
