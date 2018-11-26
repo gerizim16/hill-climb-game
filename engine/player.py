@@ -15,6 +15,8 @@ def mapFromTo(x, a, b, c, d):
 class Vehicle(object):
     def __init__(self, batch, space, window, position, side='left', 
                  torque=1000, speed=2*pi):
+        self.offset = 0
+        self.alive = True
         self.COLLTYPE_DEFAULT = 0
         self.COLLTYPE_BOXLIFE = 1
         self.COLLTYPE_SENSOR = 2
@@ -46,15 +48,20 @@ class Vehicle(object):
     def get_physical_object(self):
         return self.bodies + self.shapes + self.constraints
 
-    def update(self, x_offset=0):
-        self.position = self.chassis.body.position
-        for physical_object in self.physical_objects:
-            physical_object.update(x_offset)
-        if self.engine_sound:
-            self.engine_sound.pitch = mapFromTo(
-                abs(self.wheels[0].body.angular_velocity),
-                0, (self.speed+4), self.min_pitch, self.max_pitch
-            )
+    def update(self, myb, parentb):
+        while self.alive:
+            myb.wait()
+            self.position = self.chassis.body.position
+            for physical_object in self.physical_objects:
+                physical_object.update(self.offset)
+            try:
+                self.engine_sound.pitch = mapFromTo(
+                    abs(self.wheels[0].body.angular_velocity),
+                    0, (self.speed+4), self.min_pitch, self.max_pitch
+                )
+            except AttributeError:
+                self.alive = False
+            parentb.wait()
 
     def forward(self, torque=300000, speed=30*pi):
         for motor in self.motors:
@@ -465,5 +472,5 @@ class MotorBike(Vehicle):
         wheel2_gj = pymunk.GrooveJoint(self.chassis.body, wheel2_body, 
             (70, 0), (105, -55), (0, 0))
         self.constraints.append(wheel2_gj)
-        wheel2_ds = pymunk.DampedSpring(wheel2_body, self.chassis.body, (0, 0), (50, 35), 110, 60, 7)
+        wheel2_ds = pymunk.DampedSpring(wheel2_body, self.chassis.body, (0, 0), (50, 35), 110, 65, 7)
         self.constraints.append(wheel2_ds)

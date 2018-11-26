@@ -1,3 +1,4 @@
+import threading
 from string import whitespace
 from random import choice
 from math import pi
@@ -232,6 +233,15 @@ class Menu(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
+        # multithread update of cpu intensive objects #########################
+        self.childb = threading.Event()
+        self.parentb = threading.Barrier(4)
+        task1 = threading.Thread(name='player_update', target=self.player.update, daemon=True, args=(self.childb, self.parentb))
+        task2 = threading.Thread(name='terrain_update', target=self.terrain1.update, daemon=True, args=(self.childb, self.parentb))
+        task3 = threading.Thread(name='obstacles_update', target=self.obstacles.update, daemon=True, args=(self.childb, self.parentb))
+        task1.start()
+        task2.start()
+        task3.start()
 
     def on_mouse_hover(self, arbiter, space, data):
         button_shape, mouse_shape = arbiter.shapes
@@ -295,9 +305,10 @@ class Menu(GameState):
                 self.window.set_fullscreen(not self.window.fullscreen)
                 self.change_to = Menu.id
             if self.change_to:
-                self.player.engine_sound.delete()
+                self.cleanup()
 
     def update(self):
+        self.childb.set()
         if self.changing_gravity:
             gravityx = self.space.gravity[0]
             gravityy = self.space.gravity[1]
@@ -312,15 +323,20 @@ class Menu(GameState):
             self.space.gravity = gravityx+self.adder[0], gravityy+self.adder[1]
         else:
             self.space.gravity = 0, -900
-        self.player.update()
-        self.terrain1.update()
-        self.obstacles.update()
         self.game1_button.update()
         self.game2_button.update()
         self.game1_hs_button.update()
         self.game2_hs_button.update()
         self.gravity_button.update()
         self.fullscreen_button.update()
+        self.childb.clear()
+        self.parentb.wait()
+
+    def cleanup(self):
+        self.player.alive = False
+        self.terrain1.alive = False
+        self.obstacles.alive = False
+        self.player.engine_sound.delete()
 ###############################################################################
 class Game1(GameState):
     id = 4
@@ -386,26 +402,41 @@ class Game1(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.tank1.engine_sound.volume = 0.9
+        # multithread update of cpu intensive objects #########################
+        self.childb = threading.Event()
+        self.childb.clear()
+        self.parentb = threading.Barrier(4)
+        task1 = threading.Thread(name='player_update', target=self.tank1.update, daemon=True, args=(self.childb, self.parentb))
+        task2 = threading.Thread(name='terrain_update', target=self.terrain1.update, daemon=True, args=(self.childb, self.parentb))
+        task3 = threading.Thread(name='obstacles_update', target=self.obstacles.update, daemon=True, args=(self.childb, self.parentb))
+        task1.start()
+        task2.start()
+        task3.start()
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-           self.tank1.engine_sound.delete()
            self.change_to = Menu.id
+           self.cleanup()
         else:
             x += self.tank1.position[0]-400
             point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
             if point_q:
                 if point_q.shape.body.id == self.restart_button.id:
-                    self.tank1.engine_sound.delete()
                     self.change_to = Game1.id
+                    self.cleanup()
 
     def update(self):
+        offset = self.tank1.position[0]-400
+        # update object offsets
+        self.tank1.offset = offset
+        self.terrain1.offset = offset
+        self.obstacles.offset = offset
+        self.childb.set()
         # update variables
         self.time += 1/60
         score = -self.time + self.tank1.lives*10 + 130
         self.score_label.text = '{:.1f} pts'.format(score)
-        offset = self.tank1.position[0]-400
         self.current_score = self.tank1.position[0]//60-12
 
         # if player is dead 
@@ -422,20 +453,24 @@ class Game1(GameState):
             self.tank1.torque = 0
             self.kwargs['score'] = score
             self.kwargs['game'] = self.name
-            self.tank1.engine_sound.delete()
+            self.cleanup()
             self.change_to = Endgame.id
 
+        if self.ENDGAME:
+            self.restart_button.update(offset)
         # update sprites 
         self.finishflag_sprite.update(x=self.end_position-offset)
         self.motor_sprite.update(rotation=-25 + abs(self.tank1.wheels[0].body.angular_velocity)*1.8)
         self.speed_sprite.update(rotation=-25 + abs(self.tank1.chassis.body.velocity.x)*0.4)
         self.goalmeter.update(self.tank1.position[0]/self.end_position)
-        # update objects
-        if self.ENDGAME:
-            self.restart_button.update(offset)
-        self.tank1.update(offset)
-        self.terrain1.update(offset)
-        self.obstacles.update(offset)
+        self.childb.clear()
+        self.parentb.wait()
+
+    def cleanup(self):
+        self.tank1.alive = False
+        self.terrain1.alive = False
+        self.obstacles.alive = False
+        self.tank1.engine_sound.delete()
 ###############################################################################
 class Game2(GameState):
     id = 5
@@ -502,43 +537,47 @@ class Game2(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.motorbike.engine_sound.volume = 0.8
+        # multithread update of cpu intensive objects #########################
+        self.childb = threading.Event()
+        self.parentb = threading.Barrier(4)
+        task1 = threading.Thread(name='player_update', target=self.motorbike.update, daemon=True, args=(self.childb, self.parentb))
+        task2 = threading.Thread(name='terrain_update', target=self.terrain1.update, daemon=True, args=(self.childb, self.parentb))
+        task3 = threading.Thread(name='obstacles_update', target=self.obstacles.update, daemon=True, args=(self.childb, self.parentb))
+        task1.start()
+        task2.start()
+        task3.start()
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-            self.motorbike.engine_sound.delete()
             self.change_to = Menu.id
+            self.cleanup()
         else:
             x += self.motorbike.position[0]-400
             print(x, y)
             point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
             if point_q:
                 if point_q.shape.body.id == self.restart_button.id:
-                    self.motorbike.engine_sound.delete()
                     self.change_to = Game1.id
+                    self.cleanup()
 
     def update(self):
+        offset = self.motorbike.position[0]-400
+        self.motorbike.offset = offset
+        self.terrain1.offset = offset
+        self.obstacles.offset = offset
+        self.childb.set()
         # update variables
         self.time += 1/60
         self.time_label.text = '{:.1f} s'.format(self.time)
-        offset = self.motorbike.position[0]-400
         self.current_score = self.motorbike.position[0]//60-12
 
-        # if player is dead 
-        # if not self.ENDGAME and self.motorbike.lives == 0:
-        #     self.ENDGAME = True
-        #     # create restart button ###########################################
-        #     self.restart_button = Button(self.batch, 'restart_button', 
-        #         (self.tank1.position[0], self.tank1.position[1]+130), resources.restart_button_img, 60)
-        #     self.space.add(*self.restart_button.get_physical_object())
-        #     ###################################################################
-        
         # if player won
         if self.motorbike.position[0] > self.end_position:
             self.motorbike.torque = 0
             self.kwargs['score'] = self.time
             self.kwargs['game'] = self.name
-            self.motorbike.engine_sound.delete()
+            self.cleanup()
             self.change_to = Endgame.id
 
         # update sprites 
@@ -549,9 +588,14 @@ class Game2(GameState):
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
-        self.motorbike.update(offset)
-        self.terrain1.update(offset)
-        self.obstacles.update(offset)
+        self.childb.clear()
+        self.parentb.wait()
+    
+    def cleanup(self):
+        self.motorbike.alive = False
+        self.terrain1.alive = False
+        self.obstacles.alive = False
+        self.motorbike.engine_sound.delete()
 ###############################################################################
 class HighScore(GameState):
     id = 3
@@ -606,17 +650,27 @@ class HighScore(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
+        # multithread update of cpu intensive objects #########################
+        self.childb = threading.Event()
+        self.parentb = threading.Barrier(4)
+        task1 = threading.Thread(name='player_update', target=self.player.update, daemon=True, args=(self.childb, self.parentb))
+        task2 = threading.Thread(name='terrain_update', target=self.terrain1.update, daemon=True, args=(self.childb, self.parentb))
+        task3 = threading.Thread(name='obstacles_update', target=self.obstacles.update, daemon=True, args=(self.childb, self.parentb))
+        task1.start()
+        task2.start()
+        task3.start()
 
     def update(self):
+        self.childb.set()
         self.choice = (self.choice + choice((-1, 1))) % 12
         if self.choice >= 6:
             self.player.forward(self.player.torque, self.player.speed)
         else:
             self.player.reverse(self.player.torque, self.player.speed)
-        self.player.update()
-        self.obstacles.update()
         self.score_scroll.update()
         self.name_scroll.update()
+        self.childb.clear()
+        self.parentb.wait()
 
     def update_hs_text(self): # 38 chars
         self.scores_text = ''
@@ -632,8 +686,14 @@ class HighScore(GameState):
     def on_mouse_press(self, x, y, button, modifiers):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-            self.player.engine_sound.delete()
             self.change_to = Menu.id
+            self.cleanup()
+
+    def cleanup(self):
+        self.player.alive = False
+        self.terrain1.alive = False
+        self.obstacles.alive = False
+        self.player.engine_sound.delete()
 ###############################################################################
 class Endgame(GameState):
     id = 2
@@ -727,18 +787,28 @@ class Endgame(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
+        # multithread update of cpu intensive objects #########################
+        self.childb = threading.Event()
+        self.parentb = threading.Barrier(4)
+        task1 = threading.Thread(name='player_update', target=self.player.update, daemon=True, args=(self.childb, self.parentb))
+        task2 = threading.Thread(name='terrain_update', target=self.terrain1.update, daemon=True, args=(self.childb, self.parentb))
+        task3 = threading.Thread(name='obstacles_update', target=self.obstacles.update, daemon=True, args=(self.childb, self.parentb))
+        task1.start()
+        task2.start()
+        task3.start()
 
     def update(self):
+        self.childb.set()
         self.choice = (self.choice + choice((-1, 1))) % 12
         if self.choice >= 6:
             self.player.forward(self.player.torque, self.player.speed)
         else:
             self.player.reverse(self.player.torque, self.player.speed)
-        self.player.update()
-        self.obstacles.update()
         self.enter_button.update()
         self.score_scroll.update()
         self.name_scroll.update()
+        self.childb.clear()
+        self.parentb.wait()
 
     def update_hs_text(self): # 38 chars
         self.scores_text = ''
@@ -756,8 +826,8 @@ class Endgame(GameState):
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
             if self.userinput:
                 self.__name_entered()
-            self.player.engine_sound.delete()
             self.change_to = Menu.id
+            self.cleanup()
         elif self.userinput:
             self.userinput.caret.on_mouse_press(x, y, button, modifiers)
 
@@ -816,6 +886,11 @@ class Endgame(GameState):
         )
         self.update_hs_text()
 
+    def cleanup(self):
+        self.player.alive = False
+        self.terrain1.alive = False
+        self.obstacles.alive = False
+        self.player.engine_sound.delete()
 ###############################################################################
 if __name__ == "__main__":
     window = Window(1280, 720, 'Version 8', resizeable=False)
