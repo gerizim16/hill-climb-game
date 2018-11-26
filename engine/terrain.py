@@ -53,7 +53,7 @@ class Terrain(object):
                 ('c3B', color1 if i%2 == 0 else color2)
             ))
         self.space.add(*self.get_physical_object())
-        self.offset = self.window.width//2-520
+        # self.offset = self.window.width//2-520
 
     def get_physical_object(self):
         return [self.terrain_body] + self.terrain_shapes
