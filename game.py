@@ -17,7 +17,7 @@ from engine.button import Button
 from engine.text_input import TextInput
 from engine.hs_handling import get_highscores, add_highscore
 from engine.scrolling_text import ScrollingText
-from engine.custom_sprites import GoalSprite
+from engine.custom_sprites import GoalSprite, MeterSprite
 from engine.sound_loop import SoundLoop
 
 # categories: body, wheels, tank threads, 
@@ -203,7 +203,7 @@ class Menu(GameState):
                                     (self.window.width//2-350, 620),
                                     group=self.background)
         self.event_handlers.extend(self.player.event_handlers)
-        self.terrain1 = Terrain(self.batch, self.space, self.window,
+        self.terrain = Terrain(self.batch, self.space, self.window,
                                 mid_height=150, end_coordinate=self.window.width+200,
                                 color_set=choice(('green', 'gray')),
                                 group=self.background)
@@ -318,7 +318,7 @@ class Menu(GameState):
         self.space.gravity = gravityx+self.adder[0], gravityy+self.adder[1]
 
         self.player.update()
-        self.terrain1.update()
+        self.terrain.update()
         self.obstacles.update()
         self.game1_button.update()
         self.game2_button.update()
@@ -340,10 +340,10 @@ class Game1(GameState):
         self.tank1 = Tank(self.batch, self.space, self.window,
             (window.width//2-120, 550), add_boxlives=True)
         self.event_handlers.extend(self.tank1.event_handlers)
-        self.terrain1 = Terrain(self.batch, self.space, self.window,
+        self.terrain = Terrain(self.batch, self.space, self.window,
             interval=50, mid_height=200, height_change=0.5,
             group=self.background)
-        self.terrain1.update(x_offset=self.window.width//2-520, update_all=True)
+        self.terrain.update(x_offset=self.window.width//2-520, update_all=True)
         self.obstacles = Obstacles(self.batch, self.space, self.window, amount=3)
         # left bound
         bounds_body = pymunk.Body(body_type=pymunk.Body.STATIC)
@@ -368,25 +368,11 @@ class Game1(GameState):
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
             x=self.end_position, y=self.window.height//2-100, batch=self.batch)
         # motor meter sprite
-        self.motor_sprite_bg = pyglet.sprite.Sprite(
-            img=resources.circle_meter_img,
-            x=self.window.width//2-320, y=50, batch=self.batch, group=self.midground)
-        self.motor_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2-320, y=50, batch=self.batch, group=self.foreground)
-        self.motor_sprite.rotation = -25
-        self.motor_sprite_bg.scale = 0.5
-        self.motor_sprite.scale = 0.5
+        self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.foreground)
         # speed meter sprite
-        self.speed_sprite_bg = pyglet.sprite.Sprite(
-            img=resources.circle_meter_img,
-            x=self.window.width//2+320, y=50, batch=self.batch, group=self.midground)
-        self.speed_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2+320, y=50, batch=self.batch, group=self.foreground)
-        self.speed_sprite.rotation = -25
-        self.speed_sprite_bg.scale = 0.5
-        self.speed_sprite.scale = 0.5
+        self.speedmeter_sprite = MeterSprite(self.batch, (self.window.width//2+320, 50), group=self.foreground)
         # goal sprite
-        self.goalmeter = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), self.background)
+        self.goalmeter_sprite = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
@@ -433,14 +419,14 @@ class Game1(GameState):
 
         # update sprites 
         self.finishflag_sprite.update(x=self.end_position-offset)
-        self.motor_sprite.update(rotation=-25 + abs(self.tank1.wheels[0].body.angular_velocity)*1.8)
-        self.speed_sprite.update(rotation=-25 + abs(self.tank1.chassis.body.velocity.x)*0.4)
-        self.goalmeter.update(self.tank1.position[0]/self.end_position)
+        self.motormeter_sprite.update(abs(self.tank1.wheels[0].body.angular_velocity)/130)
+        self.speedmeter_sprite.update(abs(self.tank1.chassis.body.velocity.x)/650)
+        self.goalmeter_sprite.update(self.tank1.position[0]/self.end_position)
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
         self.tank1.update(offset)
-        self.terrain1.update(offset)
+        self.terrain.update(offset)
         self.obstacles.update(offset)
 ###############################################################################
 class Game2(GameState):
@@ -456,10 +442,10 @@ class Game2(GameState):
         self.motorbike = MotorBike(self.batch, self.space, self.window,
             (window.width//2-120, 550))
         self.event_handlers.extend(self.motorbike.event_handlers)
-        self.terrain1 = Terrain(self.batch, self.space, self.window,
+        self.terrain = Terrain(self.batch, self.space, self.window,
             interval=120, mid_height=170, height_change=0.3, color_set='gray',
             group=self.background)
-        self.terrain1.update(x_offset=self.window.width//2-520, update_all=True)
+        self.terrain.update(x_offset=self.window.width//2-520, update_all=True)
         self.obstacles = Obstacles(self.batch, self.space, self.window, 
             radius_range=(10, 20), frequency=150, amount=1)
         # left bound
@@ -485,30 +471,17 @@ class Game2(GameState):
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
             x=self.end_position, y=self.window.height//2-100, batch=self.batch)
         # motor meter sprite
-        self.motor_sprite_bg = pyglet.sprite.Sprite(
-            img=resources.circle_meter_img,
-            x=self.window.width//2-320, y=50, batch=self.batch, group=self.midground)
-        self.motor_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2-320, y=50, batch=self.batch, group=self.foreground)
-        self.motor_sprite.rotation = -25
-        self.motor_sprite_bg.scale = 0.5
-        self.motor_sprite.scale = 0.5
+        self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.foreground)
         # speed meter sprite
-        self.speed_sprite_bg = pyglet.sprite.Sprite(
-            img=resources.circle_meter_img,
-            x=self.window.width//2+320, y=50, batch=self.batch, group=self.midground)
-        self.speed_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
-            x=self.window.width//2+320, y=50, batch=self.batch, group=self.foreground)
-        self.speed_sprite.rotation = -25
-        self.speed_sprite_bg.scale = 0.5
-        self.speed_sprite.scale = 0.5
+        self.speedmeter_sprite = MeterSprite(self.batch, (self.window.width//2+320, 50), group=self.foreground)
         # goal sprite
-        self.goalmeter = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), group=self.background)
+        self.goalmeter_sprite = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), group=self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.motorbike.engine_sound.volume = 0.8
+        self.maxs=0
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
@@ -540,14 +513,14 @@ class Game2(GameState):
 
         # update sprites 
         self.finishflag_sprite.update(x=self.end_position-offset)
-        self.motor_sprite.update(rotation=-25 + abs(self.motorbike.wheels[0].body.angular_velocity)*6.7)
-        self.speed_sprite.update(rotation=-25 + abs(self.motorbike.chassis.body.velocity.x)*0.2)
-        self.goalmeter.update(self.motorbike.position[0]/self.end_position)
+        self.motormeter_sprite.update(abs(self.motorbike.wheels[0].body.angular_velocity)/35)
+        self.speedmeter_sprite.update(abs(self.motorbike.chassis.body.velocity.x)/1100)
+        self.goalmeter_sprite.update(self.motorbike.position[0]/self.end_position)
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
         self.motorbike.update(offset)
-        self.terrain1.update(offset)
+        self.terrain.update(offset)
         self.obstacles.update(offset)
 ###############################################################################
 class HighScore(GameState):
@@ -569,7 +542,7 @@ class HighScore(GameState):
             self.player = MotorBike(self.batch, self.space, self.window, 
                                (self.window.width//2, 600))
             color_set = 'gray'
-        self.terrain1 = Terrain(self.batch, self.space, self.window,
+        self.terrain = Terrain(self.batch, self.space, self.window,
                                 mid_height=400, end_coordinate=self.window.width+200, 
                                 color_set=color_set,
                                 group=self.background)
@@ -657,7 +630,7 @@ class Endgame(GameState):
             self.player = MotorBike(self.batch, self.space, self.window, 
                                (self.window.width//2, 600))
             color_set = 'gray'
-        self.terrain1 = Terrain(self.batch, self.space, self.window,
+        self.terrain = Terrain(self.batch, self.space, self.window,
                                 mid_height=400, end_coordinate=self.window.width+200, 
                                 color_set=color_set, group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
