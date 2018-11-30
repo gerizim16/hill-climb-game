@@ -25,7 +25,7 @@ from engine.sound_loop import SoundLoop
 #             buttons
 
 class Window(pyglet.window.Window):
-    def __init__(self, width, height, caption, resizeable):
+    def __init__(self, width, height, caption='', resizeable=False):
         super().__init__(width, height, caption, resizeable)
         self.main_batch = pyglet.graphics.Batch()
         self.space = pymunk.Space()
@@ -190,16 +190,18 @@ class Menu(GameState):
         self.bg = pyglet.sprite.Sprite(
             img=resources.background_img,
             x=self.window.width//2, y=self.window.height//2+100, batch=self.batch,
-            group=self.background
+            group=self.midground
         )
         self.event_handlers.append(self.on_mouse_press)
         # objects #############################################################
         if choice((1, 2)) == 1:
             self.player = Tank(self.batch, self.space, self.window,
-                               (self.window.width//2-350, 620), side='left')
+                               (self.window.width//2-350, 620), side='left',
+                               group=self.background)
         else:
             self.player = MotorBike(self.batch, self.space, self.window,
-                                    (self.window.width//2-350, 620))
+                                    (self.window.width//2-350, 620),
+                                    group=self.background)
         self.event_handlers.extend(self.player.event_handlers)
         self.terrain1 = Terrain(self.batch, self.space, self.window,
                                 mid_height=150, end_coordinate=self.window.width+200,
@@ -301,20 +303,20 @@ class Menu(GameState):
 
     def update(self):
         if self.changing_gravity:
-            gravityx = self.space.gravity[0]
-            gravityy = self.space.gravity[1]
-            if 900 < gravityx:
-                self.adder[0] = -10
-            elif gravityx < -900:
-                self.adder[0] = 10
-            if 900 < gravityy:
-                self.adder[1] = -10
-            elif gravityy < -900:
-                self.adder[1] = 10
-            self.space.gravity = gravityx+self.adder[0], gravityy+self.adder[1]
+            min_g, max_g= -900, 900
         else:
-            self.space.gravity = 0, -900
-            self.space.gravity = 0, 0
+            min_g, max_g= -50, 50
+        gravityx, gravityy = self.space.gravity
+        if max_g < gravityx:
+            self.adder[0] = -10
+        elif gravityx < min_g:
+            self.adder[0] = 10
+        if max_g < gravityy:
+            self.adder[1] = -15
+        elif gravityy < min_g:
+            self.adder[1] = 15
+        self.space.gravity = gravityx+self.adder[0], gravityy+self.adder[1]
+
         self.player.update()
         self.terrain1.update()
         self.obstacles.update()
@@ -406,14 +408,14 @@ class Game1(GameState):
 
     def update(self):
         # update variables
-        self.time += 1/60
-        score = -self.time + self.tank1.lives*10 + 130
-        self.score_label.text = '{:.1f} pts'.format(score)
         offset = self.tank1.position[0]-400
-        self.current_score = self.tank1.position[0]//60-12
+        self.time += 1/60
+        score = 0 if self.ENDGAME else -self.time + self.tank1.lives*10 + 130
+        self.score_label.text = '{:.1f} pts'.format(score)
 
         # if player is dead 
         if not self.ENDGAME and (self.tank1.lives == 0 or score < 0):
+            self.tank1.torque = 0
             self.ENDGAME = True
             # create restart button ###########################################
             self.restart_button = Button(self.batch, 'restart_button', 
@@ -527,17 +529,7 @@ class Game2(GameState):
         self.time += 1/60
         self.time_label.text = '{:.1f} s'.format(self.time)
         offset = self.motorbike.position[0]-400
-        self.current_score = self.motorbike.position[0]//60-12
 
-        # if player is dead 
-        # if not self.ENDGAME and self.motorbike.lives == 0:
-        #     self.ENDGAME = True
-        #     # create restart button ###########################################
-        #     self.restart_button = Button(self.batch, 'restart_button', 
-        #         (self.tank1.position[0], self.tank1.position[1]+130), resources.restart_button_img, 60)
-        #     self.space.add(*self.restart_button.get_physical_object())
-        #     ###################################################################
-        
         # if player won
         if self.motorbike.position[0] > self.end_position:
             self.motorbike.torque = 0
@@ -615,9 +607,9 @@ class HighScore(GameState):
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
         if self.choice >= 6:
-            self.player.forward(self.player.torque, self.player.speed)
+            self.player.forward()
         else:
-            self.player.reverse(self.player.torque, self.player.speed)
+            self.player.reverse()
         self.player.update()
         self.obstacles.update()
         self.score_scroll.update()
@@ -736,9 +728,9 @@ class Endgame(GameState):
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
         if self.choice >= 6:
-            self.player.forward(self.player.torque, self.player.speed)
+            self.player.forward()
         else:
-            self.player.reverse(self.player.torque, self.player.speed)
+            self.player.reverse()
         self.player.update()
         self.obstacles.update()
         self.enter_button.update()

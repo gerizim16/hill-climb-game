@@ -56,15 +56,15 @@ class Vehicle(object):
                 0, (self.speed+4), self.min_pitch, self.max_pitch
             )
 
-    def forward(self, torque=300000, speed=30*pi):
+    def forward(self):
         for motor in self.motors:
-            motor.max_force = torque
-            motor.rate = speed
+            motor.max_force = self.torque
+            motor.rate = self.speed
 
-    def reverse(self, torque=300000, speed=30*pi):
+    def reverse(self):
         for motor in self.motors:
-            motor.max_force = torque
-            motor.rate = -speed
+            motor.max_force = self.torque
+            motor.rate = -self.speed
 
     def stop(self):
         for motor in self.motors:
@@ -76,9 +76,9 @@ class Vehicle(object):
 
     def on_key_press(self, symbol, modifiers):
         if symbol == key.D:
-            self.forward(self.torque, self.speed)
+            self.forward()
         if symbol == key.A:
-            self.reverse(self.torque, self.speed)
+            self.reverse()
 
 class Tank(Vehicle):
     name = 'tank'
@@ -226,22 +226,20 @@ class Tank(Vehicle):
             wheel_shape.filter = pymunk.ShapeFilter(categories=0b0100000, mask=0b0111111)
             wheel_shape.elasticity = 0.3
             wheel_shape.friction = 0.95
+
             if i not in (0, 4):
                 wheel_gj = pymunk.GrooveJoint(self.chassis.body, wheel_body, (wheel_body.position.x-self.chassis.body.position.x, 30), (wheel_body.position.x-self.chassis.body.position.x, -60), (0, 0))
                 wheel_ds = pymunk.DampedSpring(self.chassis.body, wheel_body, (wheel_body.position.x-self.chassis.body.position.x, 30), (0, 0), 95, 250, 20)
                 self.constraints.append(wheel_gj)
                 self.constraints.append(wheel_ds)
-            elif i == 0:
+            else:
                 wheel_pj = pymunk.PivotJoint(self.chassis.body, wheel_body, wheel_body.position)
                 self.constraints.append(wheel_pj)
-            elif i == 4:
-                wheel_pj = pymunk.PivotJoint(self.chassis.body, wheel_body, wheel_body.position)
-                self.constraints.append(wheel_pj)
-            if i in (0, 4):
                 wheel_m = pymunk.SimpleMotor(self.chassis.body, wheel_body, 3*pi)
                 wheel_m.max_force = 0
                 self.constraints.append(wheel_m)
                 self.motors.append(wheel_m)
+
             wheel_sprite = pyglet.sprite.Sprite(
                 img=resources.wheel_img, 
                 x=wheel_body.position.x, y=wheel_body.position.y, batch=self.batch)
@@ -254,9 +252,9 @@ class Tank(Vehicle):
 
     def __build_tank_threads(self):
         mass = 0.25
-        length = 24 # 19
+        length = 24 # 24
         thickness = 3 # 3
-        x_amount = 12 # 15
+        x_amount = 12 # 12
         y_amount = 4 # 4
         x_offset = self.position[0] - 145
         y_offset = self.position[1] + 10
@@ -315,11 +313,13 @@ class Tank(Vehicle):
 class MotorBike(Vehicle):
     name = 'motorbike'
     def __init__(self, batch, space, window, position, side='left', 
-                 torque=120000, speed=11*pi):
+                 torque=120000, speed=11*pi, group=None):
         super().__init__(batch, space, window, position, side=side,
                          torque=torque, speed=speed)
 
         self.__build_motorbike()
+        for sprite in self.sprites:
+            sprite.group = group
 
         self.event_handlers = (self.on_key_press, self.on_key_release)
         self.space.add(self.get_physical_object())
