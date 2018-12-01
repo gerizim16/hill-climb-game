@@ -326,7 +326,7 @@ class Game1(GameState):
             (window.width//2-120, 550), add_boxlives=True, group=self.background)
         self.event_handlers.extend(self.tank1.event_handlers)
         self.terrain = Terrain(self.batch, self.space, self.window,
-            interval=50, mid_height=200, height_change=0.5,
+            interval=50, mid_height=170, height_change=0.5,
             group=self.background)
         self.terrain.update(x_offset=self.window.width//2-520, update_all=True)
         self.obstacles = Obstacles(self.batch, self.space, self.window, amount=3, group=self.back)
