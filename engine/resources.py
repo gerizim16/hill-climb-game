@@ -1,5 +1,6 @@
 import pyglet
 
+print('Loading resources')
 
 def center_image(image):
     """Sets an image's anchor point to its center"""
@@ -7,10 +8,10 @@ def center_image(image):
     image.anchor_y = image.height / 2
 
 # Tell pyglet where to find the resources
-pyglet.resource.path = ['./resources']
+pyglet.resource.path = ['./resources', './resources/backgrounds']
 pyglet.resource.reindex()
 
-images = []
+images = list()
 
 # Load the three main resources and get them to draw centered
 tank_body_img = pyglet.resource.image('tank_body.png')
@@ -103,6 +104,18 @@ images.append(background_img)
 for image in images:
     center_image(image)
 
+# load backgrounds
+parallax_bgs = list()
+layer_counts = (3, 2, 2, 2, 3, 4)
+for bg_i, layer_count in enumerate(layer_counts):
+    bg_set = list()
+    for layer_i in range(layer_count):
+        bg_set.append(pyglet.resource.image('{}layer_{}.png'.format(bg_i, layer_i)))
+    parallax_bgs.append(tuple(bg_set))
+parallax_bgs = tuple(parallax_bgs)
+
 # Load sfx without streaming
 engine_sfx = pyglet.media.load('./resources/engine_sfx.wav', streaming=False)
 bg_music = pyglet.media.load('./resources/bg_music.wav', streaming=False)
+
+print('Resource loading successful')

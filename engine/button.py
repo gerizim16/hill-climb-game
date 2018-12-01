@@ -7,7 +7,7 @@ import pyglet
 class Button(pymunk.Body):
     def __init__(self, batch, space, id, position, img, dimensions, 
                  body_type=pymunk.Body.DYNAMIC, sensor=False, 
-                 group=pyglet.graphics.OrderedGroup(2)):
+                 group=pyglet.graphics.OrderedGroup(13)):
         super().__init__(1)
         self.COLLTYPE_BUTTON = 3
         self.id = id

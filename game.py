@@ -1,5 +1,5 @@
 from string import whitespace
-from random import choice
+from random import choice, randrange
 from math import pi
 
 # third party modules
@@ -17,7 +17,7 @@ from engine.button import Button
 from engine.text_input import TextInput
 from engine.hs_handling import get_highscores, add_highscore
 from engine.scrolling_text import ScrollingText
-from engine.custom_sprites import GoalSprite, MeterSprite
+from engine.custom_sprites import GoalSprite, MeterSprite, ParallaxBG
 from engine.sound_loop import SoundLoop
 
 # categories: body, wheels, tank threads, 
@@ -37,7 +37,7 @@ class Window(pyglet.window.Window):
         self.change_mode = None
 
         self.options = DrawOptions() # debugging
-        self.options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES # debugging
+        # self.options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES # debugging
         self.fps_display = pyglet.clock.ClockDisplay(color=(1,1,1,1)) # debugging
 
         # bg music ############################################################
@@ -48,15 +48,7 @@ class Window(pyglet.window.Window):
         pyglet.clock.schedule_interval(self.update, 1/60.0)
 
     def on_draw(self):
-        pyglet.graphics.draw_indexed(
-            4, pyglet.gl.GL_TRIANGLES,
-            [0, 1, 2, 0, 2, 3],
-            ('v2i', (0, 0,
-                    self.width, 0,
-                    self.width, self.height,
-                    0, self.height)),
-            ('c3B', (255, 255, 255)*2 + (10, 84, 152) + (222, 201, 47))
-        )
+        # self.clear()
         # self.space.debug_draw(self.options) # debugging
         self.main_batch.draw()
         self.fps_display.draw() # debugging
@@ -113,10 +105,11 @@ class GameState(object):
         self.COLLTYPE_BUTTON = 3
         self.COLLTYPE_MOUSE = 4
 
-        self.background = pyglet.graphics.OrderedGroup(0)
-        self.midground = pyglet.graphics.OrderedGroup(1)
-        self.foreground = pyglet.graphics.OrderedGroup(2)
-        self.front = pyglet.graphics.OrderedGroup(3)
+        self.back = pyglet.graphics.OrderedGroup(10)
+        self.background = pyglet.graphics.OrderedGroup(11)
+        self.midground = pyglet.graphics.OrderedGroup(12)
+        self.foreground = pyglet.graphics.OrderedGroup(13)
+        self.front = pyglet.graphics.OrderedGroup(14)
 
         self.buttons = pymunk.ShapeFilter(mask=0b0000001)
 
@@ -209,7 +202,7 @@ class Menu(GameState):
                                 group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=40,
-            amount=2, x_offset=1600, group=self.background)
+            amount=2, x_offset=1600, group=self.back)
         # buttons #############################################################
         self.game1_button = Button(self.batch, self.space, 'game1_button', 
             (self.window.width//2-100, 700), resources.game1_button_img, 60)
@@ -227,6 +220,7 @@ class Menu(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
 
     def on_mouse_hover(self, arbiter, space, data):
         button_shape, mouse_shape = arbiter.shapes
@@ -329,13 +323,13 @@ class Game1(GameState):
         self.end_position = 27000
         # objects #############################################################
         self.tank1 = Tank(self.batch, self.space, self.window,
-            (window.width//2-120, 550), add_boxlives=True)
+            (window.width//2-120, 550), add_boxlives=True, group=self.background)
         self.event_handlers.extend(self.tank1.event_handlers)
         self.terrain = Terrain(self.batch, self.space, self.window,
             interval=50, mid_height=200, height_change=0.5,
             group=self.background)
         self.terrain.update(x_offset=self.window.width//2-520, update_all=True)
-        self.obstacles = Obstacles(self.batch, self.space, self.window, amount=3)
+        self.obstacles = Obstacles(self.batch, self.space, self.window, amount=3, group=self.back)
         # left bound
         bounds_body = pymunk.Body(body_type=pymunk.Body.STATIC)
         bounds_body.position = (0, 0)
@@ -344,7 +338,7 @@ class Game1(GameState):
         left_bound_s.filter = pymunk.ShapeFilter(categories=0b0001000, mask=0b1110111)
         # buttons #############################################################
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
-            x=55, y=self.window.height-35, batch=self.batch)
+            x=55, y=self.window.height-35, batch=self.batch, group=self.front)
         # labels ##############################################################
         self.score_label = pyglet.text.Label('',
                                             # font_name='Times New Roman',
@@ -352,23 +346,24 @@ class Game1(GameState):
                                             x=self.window.width-440, y=self.window.height-110,
                                             color=(0,0,0,255),
                                             anchor_x='right', anchor_y='baseline',
-                                            batch=self.batch,
+                                            batch=self.batch, group=self.front
                                             )
         # sprites #############################################################
         # finish flag sprite
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img,
-            x=self.end_position, y=self.window.height//2-100, batch=self.batch, group=self.background)
+            x=self.end_position, y=self.window.height//2-100, batch=self.batch, group=self.back)
         # motor meter sprite
-        self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.foreground)
+        self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.midground)
         # speed meter sprite
-        self.speedmeter_sprite = MeterSprite(self.batch, (self.window.width//2+320, 50), group=self.foreground)
+        self.speedmeter_sprite = MeterSprite(self.batch, (self.window.width//2+320, 50), group=self.midground)
         # goal sprite
-        self.goalmeter_sprite = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), self.background)
+        self.goalmeter_sprite = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), group=self.background)
         #######################################################################
         self.space.add(bounds_body, left_bound_s)
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
-        self.tank1.engine_sound.volume = 0.9
+        self.tank1.engine_sound.volume = 1
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
@@ -412,6 +407,7 @@ class Game1(GameState):
         self.motormeter_sprite.update(abs(self.tank1.wheels[0].body.angular_velocity)/130)
         self.speedmeter_sprite.update(abs(self.tank1.chassis.body.velocity.x)/650)
         self.goalmeter_sprite.update(self.tank1.position[0]/self.end_position)
+        self.parallax.update(offset=offset)
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
@@ -430,14 +426,14 @@ class Game2(GameState):
         self.end_position = 27000
         # objects #############################################################
         self.motorbike = MotorBike(self.batch, self.space, self.window,
-            (window.width//2-120, 550))
+            (window.width//2-120, 550), group=self.background)
         self.event_handlers.extend(self.motorbike.event_handlers)
         self.terrain = Terrain(self.batch, self.space, self.window,
             interval=120, mid_height=170, height_change=0.3, color_set='gray',
             group=self.background)
         self.terrain.update(x_offset=self.window.width//2-520, update_all=True)
         self.obstacles = Obstacles(self.batch, self.space, self.window, 
-            radius_range=(10, 20), frequency=150, amount=1)
+            radius_range=(10, 20), frequency=150, amount=1, group=self.back)
         # left bound
         bounds_body = pymunk.Body(body_type=pymunk.Body.STATIC)
         bounds_body.position = (0, 0)
@@ -446,7 +442,7 @@ class Game2(GameState):
         left_bound_s.filter = pymunk.ShapeFilter(categories=0b0001000, mask=0b1110111)
         # buttons #############################################################
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
-            x=55, y=self.window.height-35, batch=self.batch)
+            x=55, y=self.window.height-35, batch=self.batch, group=self.front)
         # labels ##############################################################
         self.time_label = pyglet.text.Label('',
                                             # font_name='Times New Roman',
@@ -454,16 +450,16 @@ class Game2(GameState):
                                             x=self.window.width-440, y=self.window.height-110,
                                             color=(0,0,0,255),
                                             anchor_x='right', anchor_y='baseline',
-                                            batch=self.batch,
+                                            batch=self.batch, group=self.front
                                             )
         # sprites #############################################################
         # finish flag sprite
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
-            x=self.end_position, y=self.window.height//2-100, batch=self.batch, group=self.background)
+            x=self.end_position, y=self.window.height//2-100, batch=self.batch, group=self.back)
         # motor meter sprite
-        self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.foreground)
+        self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.midground)
         # speed meter sprite
-        self.speedmeter_sprite = MeterSprite(self.batch, (self.window.width//2+320, 50), group=self.foreground)
+        self.speedmeter_sprite = MeterSprite(self.batch, (self.window.width//2+320, 50), group=self.midground)
         # goal sprite
         self.goalmeter_sprite = GoalSprite(self.batch, (self.window.width-230, self.window.height-80), group=self.background)
         #######################################################################
@@ -471,6 +467,7 @@ class Game2(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.motorbike.engine_sound.volume = 0.8
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
@@ -505,6 +502,7 @@ class Game2(GameState):
         self.motormeter_sprite.update(abs(self.motorbike.wheels[0].body.angular_velocity)/35)
         self.speedmeter_sprite.update(abs(self.motorbike.chassis.body.velocity.x)/1100)
         self.goalmeter_sprite.update(self.motorbike.position[0]/self.end_position)
+        self.parallax.update(offset=offset)
         # update objects
         if self.ENDGAME:
             self.restart_button.update(offset)
@@ -525,11 +523,11 @@ class HighScore(GameState):
         # objects #############################################################
         if self.game == Game1.name:
             self.player = Tank(self.batch, self.space, self.window, 
-                               (self.window.width//2, 600))
+                               (self.window.width//2, 600), group=self.background)
             color_set = 'green'
         elif self.game == Game2.name:
             self.player = MotorBike(self.batch, self.space, self.window, 
-                               (self.window.width//2, 600))
+                               (self.window.width//2, 600), group=self.background)
             color_set = 'gray'
         self.terrain = Terrain(self.batch, self.space, self.window,
                                 mid_height=400, end_coordinate=self.window.width+200, 
@@ -537,10 +535,10 @@ class HighScore(GameState):
                                 group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
-            amount=1, x_offset=1600, min_height=450)
+            amount=1, x_offset=1600, min_height=450, group=self.background)
         # buttons #############################################################
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
-            x=55, y=self.window.height-35, batch=self.batch)
+            x=55, y=self.window.height-35, batch=self.batch, group=self.front)
         # labels ##############################################################
         self.highscore_label = pyglet.text.Label(
                                'Highscores:',
@@ -565,6 +563,7 @@ class HighScore(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
@@ -613,24 +612,24 @@ class Endgame(GameState):
         # objects #############################################################
         if self.game == Game1.name:
             self.player = Tank(self.batch, self.space, self.window, 
-                               (self.window.width//2, 600))
+                               (self.window.width//2, 600), group=self.background)
             color_set = 'green'
         elif self.game == Game2.name:
             self.player = MotorBike(self.batch, self.space, self.window, 
-                               (self.window.width//2, 600))
+                               (self.window.width//2, 600), group=self.background)
             color_set = 'gray'
         self.terrain = Terrain(self.batch, self.space, self.window,
                                 mid_height=400, end_coordinate=self.window.width+200, 
                                 color_set=color_set, group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
-            amount=1, x_offset=1600, min_height=450)
+            amount=1, x_offset=1600, min_height=450, group=self.background)
         # buttons #############################################################
         self.enter_button = Button(self.batch, self.space, 'enter_button', (640-80, 120),
             resources.enter_button_img, (120, 50), pymunk.Body.STATIC, sensor=True
         )
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
-            x=55, y=self.window.height-35, batch=self.batch)
+            x=55, y=self.window.height-35, batch=self.batch, group=self.front)
         # labels ##############################################################
         self.name_label = pyglet.text.Label(
                           'Enter your name:',
@@ -685,6 +684,7 @@ class Endgame(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
