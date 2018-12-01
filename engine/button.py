@@ -5,12 +5,12 @@ import pyglet
 
 
 class Button(pymunk.Body):
-    def __init__(self, batch, space, name, position, img, dimensions, 
+    def __init__(self, batch, space, id, position, img, dimensions, 
                  body_type=pymunk.Body.DYNAMIC, sensor=False, 
                  group=pyglet.graphics.OrderedGroup(2)):
         super().__init__(1)
         self.COLLTYPE_BUTTON = 3
-        self.name = name
+        self.id = id
         self.position = position
         self.body_type = body_type
         self.update_rotate = True
@@ -25,7 +25,7 @@ class Button(pymunk.Body):
         self.button_shape.elasticity = 1
         self.button_shape.friction = 0.8
         self.button_shape.collision_type = self.COLLTYPE_BUTTON
-        self.button_shape.name = name
+        self.button_shape.id = id
         self.sprite = pyglet.sprite.Sprite(img, x=self.position.x, y=self.position.y,
             batch=batch, group=group)
         space.add(*self.get_physical_object())
