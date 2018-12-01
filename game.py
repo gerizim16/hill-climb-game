@@ -211,28 +211,19 @@ class Menu(GameState):
             end_coordinate=self.window.width, frequency=40,
             amount=2, x_offset=1600, group=self.background)
         # buttons #############################################################
-        self.game1_button = Button(self.batch, 'game1_button', 
+        self.game1_button = Button(self.batch, self.space, 'game1_button', 
             (self.window.width//2-100, 700), resources.game1_button_img, 60)
-        self.game2_button = Button(self.batch, 'game2_button', 
+        self.game2_button = Button(self.batch, self.space, 'game2_button', 
             (self.window.width//2+50, 700), resources.game2_button_img, 60)
-        self.game1_hs_button = Button(self.batch, 'game1_hs_button', 
+        self.game1_hs_button = Button(self.batch, self.space, 'game1_hs_button', 
             (self.window.width//2+250, 700), resources.game1_hs_button_img, 60)
-        self.game2_hs_button = Button(self.batch, 'game2_hs_button', 
+        self.game2_hs_button = Button(self.batch, self.space, 'game2_hs_button', 
             (self.window.width//2+400, 700), resources.game2_hs_button_img, 60)
-        self.gravity_button = Button(self.batch, 'gravity_button', 
+        self.gravity_button = Button(self.batch, self.space, 'gravity_button', 
             (self.window.width//2+500, 700), resources.gravity_button_img, 30)
-        self.fullscreen_button = Button(self.batch, 'fullscreen_button', 
+        self.fullscreen_button = Button(self.batch, self.space, 'fullscreen_button', 
             (self.window.width//2+600, 700), resources.fullscreen_button_img, 60)
         #######################################################################
-        self.space.add(
-                  *self.game1_button.get_physical_object(),
-                  *self.game2_button.get_physical_object(),
-                  *self.game1_hs_button.get_physical_object(),
-                  *self.game2_hs_button.get_physical_object(),
-                  *self.gravity_button.get_physical_object(),
-                  *self.fullscreen_button.get_physical_object()
-                 )
-
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
@@ -365,8 +356,8 @@ class Game1(GameState):
                                             )
         # sprites #############################################################
         # finish flag sprite
-        self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
-            x=self.end_position, y=self.window.height//2-100, batch=self.batch)
+        self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img,
+            x=self.end_position, y=self.window.height//2-100, batch=self.batch, group=self.background)
         # motor meter sprite
         self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.foreground)
         # speed meter sprite
@@ -382,8 +373,8 @@ class Game1(GameState):
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
            self.menu_button.y-self.menu_button.height//2 < y < self.menu_button.y+self.menu_button.height//2:
-           self.tank1.engine_sound.delete()
-           self.change_to = Menu.id
+            self.tank1.engine_sound.delete()
+            self.change_to = Menu.id
         else:
             x += self.tank1.position[0]-400
             point_q = self.space.point_query_nearest((x, y), 0, self.buttons)
@@ -404,9 +395,8 @@ class Game1(GameState):
             self.tank1.torque = 0
             self.ENDGAME = True
             # create restart button ###########################################
-            self.restart_button = Button(self.batch, 'restart_button', 
+            self.restart_button = Button(self.batch, self.space, 'restart_button', 
                 (self.tank1.position[0], self.tank1.position[1]+130), resources.restart_button_img, 60)
-            self.space.add(*self.restart_button.get_physical_object())
             ###################################################################
         
         # if player won
@@ -469,7 +459,7 @@ class Game2(GameState):
         # sprites #############################################################
         # finish flag sprite
         self.finishflag_sprite = pyglet.sprite.Sprite(img=resources.finishflag_img, 
-            x=self.end_position, y=self.window.height//2-100, batch=self.batch)
+            x=self.end_position, y=self.window.height//2-100, batch=self.batch, group=self.background)
         # motor meter sprite
         self.motormeter_sprite = MeterSprite(self.batch, (self.window.width//2-320, 50), group=self.foreground)
         # speed meter sprite
@@ -547,7 +537,7 @@ class HighScore(GameState):
                                 group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
-            amount=1, x_offset=1600, mid_height=450)
+            amount=1, x_offset=1600, min_height=450)
         # buttons #############################################################
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
             x=55, y=self.window.height-35, batch=self.batch)
@@ -634,9 +624,9 @@ class Endgame(GameState):
                                 color_set=color_set, group=self.background)
         self.obstacles = Obstacles(self.batch, self.space, self.window,
             end_coordinate=self.window.width, frequency=30,
-            amount=1, x_offset=1600, mid_height=450)
+            amount=1, x_offset=1600, min_height=450)
         # buttons #############################################################
-        self.enter_button = Button(self.batch, 'enter_button', (640-80, 120),
+        self.enter_button = Button(self.batch, self.space, 'enter_button', (640-80, 120),
             resources.enter_button_img, (120, 50), pymunk.Body.STATIC, sensor=True
         )
         self.menu_button = pyglet.sprite.Sprite(img=resources.menu_button_img,
@@ -690,7 +680,6 @@ class Endgame(GameState):
             self.on_key_press
         ))
 
-        self.space.add(*self.enter_button.get_physical_object())
         self.window.push_handlers(*self.event_handlers)
 
         self.update_hs_text()

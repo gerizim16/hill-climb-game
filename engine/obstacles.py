@@ -7,7 +7,7 @@ import pymunk
 
 class Obstacles(object):
     def __init__(self, batch, space, window, end_coordinate=30000, radius_range=(10, 40), 
-                 mass=1, frequency=125, amount=4, x_offset=0, mid_height=380,
+                 mass=1, frequency=125, amount=4, x_offset=0, min_height=380,
                  group=None):
         self.batch = batch
         self.space = space
@@ -33,7 +33,7 @@ class Obstacles(object):
 
                     obstacle_moment = pymunk.moment_for_poly(mass, pymunk_coords)
                     obstacle_body = pymunk.Body(mass, obstacle_moment)
-                    obstacle_body.position = i, mid_height + j*80
+                    obstacle_body.position = i, min_height + j*80
                     obstacle_shape = pymunk.Poly(obstacle_body, pymunk_coords)
                     obstacle_shape.filter = pymunk.ShapeFilter(categories=0b0000100, mask=0b1111111)
                     obstacle_shape.elasticity = 0.7

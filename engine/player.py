@@ -312,9 +312,9 @@ class Tank(Vehicle):
 
 class MotorBike(Vehicle):
     name = 'motorbike'
-    def __init__(self, batch, space, window, position, side='left', 
+    def __init__(self, batch, space, window, position,
                  torque=120000, speed=11*pi, group=None):
-        super().__init__(batch, space, window, position, side=side,
+        super().__init__(batch, space, window, position,
                          torque=torque, speed=speed)
 
         self.__build_motorbike()
