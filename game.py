@@ -481,7 +481,6 @@ class Game2(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.motorbike.engine_sound.volume = 0.8
-        self.maxs=0
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\

@@ -43,4 +43,4 @@ class Button(pymunk.Body):
             )
 
     def get_physical_object(self):
-        return (self,) + (self.button_shape,)
+        return self, self.button_shape

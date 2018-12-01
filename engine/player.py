@@ -18,7 +18,7 @@ class Vehicle(object):
         self.COLLTYPE_DEFAULT = 0
         self.COLLTYPE_BOXLIFE = 1
         self.COLLTYPE_SENSOR = 2
-        
+
         self.batch = batch
         self.space = space
         self.window = window
@@ -344,7 +344,6 @@ class MotorBike(Vehicle):
             self.rotator.max_force = 300000
             self.rotator.rate = -6*pi
             self.motors[0].max_force = 50000
-            # self.motors[0].rate = -self.speed
             self.motors[0].rate = 0
 
     def __build_motorbike(self):
