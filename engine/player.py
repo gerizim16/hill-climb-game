@@ -114,8 +114,6 @@ class Tank(Vehicle):
         self.lives -= 1
         if self.lives == 0:
             self.torque = 0
-        # print(boxlife_shape.id) # debug
-        print(self.lives) # debug
 
     def __build_tank(self):
         self.__build_tank_body()

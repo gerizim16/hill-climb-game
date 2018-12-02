@@ -19,7 +19,7 @@ def add_highscore(filename, name, score, ascending=True):
         print(current_hs)
         current_hs = sorted(current_hs, 
                             key=lambda item: item[1], reverse=not ascending)
-        current_hs = current_hs[0:50-1] # only store top 50
+        current_hs = current_hs[0:50] # only store top 50
     else: # no highscore yet
         current_hs = ((name, score),)
     with open(filename, 'w', encoding='utf-8') as hs_file:

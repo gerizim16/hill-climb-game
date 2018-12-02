@@ -61,6 +61,7 @@ class Window(pyglet.window.Window):
         if new_mode:
             args_to_pass = self.activated_mode.args
             kwargs_to_pass = self.activated_mode.kwargs
+            print('ID: {} | args: {} | kwargs: {}'.format(new_mode, args_to_pass, kwargs_to_pass))
             # delete current gamestate instance
             del self.activated_mode
             # remove objects in pymunk space
@@ -93,7 +94,7 @@ class Window(pyglet.window.Window):
                 self.activated_mode = HighScore(self.main_batch, self.space, self, *args_to_pass, **kwargs_to_pass)
 
     def on_mouse_press(self, x, y, button, modifier):
-        print(x, y, button, modifier)
+        print('Mouse pressed:', x, y, button, modifier)
 
 # MENU AND GAME MODES #########################################################
 class GameState(object):
@@ -220,7 +221,7 @@ class Menu(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
-        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(6))
 
     def on_mouse_hover(self, arbiter, space, data):
         button_shape, mouse_shape = arbiter.shapes
@@ -363,7 +364,7 @@ class Game1(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.tank1.engine_sound.volume = 1
-        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(6))
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
@@ -467,7 +468,7 @@ class Game2(GameState):
         self.window.push_handlers(*self.event_handlers)
         # sound fx ############################################################
         self.motorbike.engine_sound.volume = 0.8
-        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(6))
     
     def on_mouse_press(self, x, y, button, modifier):
         if self.menu_button.x-self.menu_button.width//2 < x < self.menu_button.x+self.menu_button.width//2 and\
@@ -563,7 +564,7 @@ class HighScore(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
-        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(6))
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
@@ -684,7 +685,7 @@ class Endgame(GameState):
         self.update_hs_text()
         # sound fx ############################################################
         self.player.engine_sound.volume = 0.6
-        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(5))
+        self.parallax = ParallaxBG(self.batch, self.window.get_size(), randrange(6))
 
     def update(self):
         self.choice = (self.choice + choice((-1, 1))) % 12
