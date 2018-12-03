@@ -1,5 +1,5 @@
-from random import gauss
-from math import sin, pi
+from random import gauss, randint
+from math import sin, cos, pi
 
 import pyglet
 import pymunk
@@ -36,7 +36,7 @@ class Terrain(object):
 
         for i, coord in enumerate(list(zip(coords, coords[1:]))):
             coord1, coord2 = coord
-            verts = (coord1, coord2, (coord2[0], 0), (coord1[0]-30, 0))
+            verts = (coord1, coord2, (coord2[0], 0), (coord1[0]-25, 0))
             terrain_shape = pymunk.Poly(self.terrain_body, verts)
             terrain_shape.filter = pymunk.ShapeFilter(categories=0b0001000, 
                                                       mask=0b1110111)
@@ -64,3 +64,61 @@ class Terrain(object):
                     x, y = v
                     pyglet_coords.extend((x-x_offset, y))
                 self.terrain_primitives[i].vertices = pyglet_coords
+
+class SymmetricTerrain(object):
+    def __init__(self, batch, space, window, color_set='gray', group=None):
+        if color_set == 'green':
+            color1 = (78, 51, 0)*2 + (0, 145, 48)*2
+            color2 = (78, 51, 0)*2 + (0, 78, 26)*2
+        elif color_set == 'gray':
+            color1 = (78, 51, 0)*2 + (128, 128, 128)*2
+            color2 = (78, 51, 0)*2 + (80, 80, 80)*2
+        self.batch = batch
+        self.space = space
+        self.window = window
+        width = self.window.width
+
+        self.terrain_body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        self.terrain_body.position = (width//2, 0)
+        self.terrain_shapes = []
+        self.terrain_primitives = []
+        interval = self.window.width//2
+
+        height_change = randint(-15, 15)
+        period = randint(100, 200)
+        coords = []
+        for i in range(-width//2, width//2+interval, interval):
+            x, y = i, 135 + height_change*cos(i/period)
+            coords.append((x, y))
+
+        for i, coord in enumerate(list(zip(coords, coords[1:]))):
+            coord1, coord2 = coord
+            verts = (coord1, coord2, (coord2[0], 0), (coord1[0], 0))
+            terrain_shape = pymunk.Poly(self.terrain_body, verts)
+            terrain_shape.filter = pymunk.ShapeFilter(categories=0b0001000, 
+                                                      mask=0b1100101)
+            terrain_shape.elasticity = 0.9
+            terrain_shape.friction = 0.95
+            terrain_shape.collision_type = 6 if coord2[0] <= 0 else 7
+            self.terrain_shapes.append(terrain_shape)
+
+            self.terrain_primitives.append(self.batch.add_indexed(
+                4, pyglet.gl.GL_TRIANGLES, group,
+                [0, 1, 3, 1, 2, 3],
+                ('v2f', (*coord1, *coord2, coord2[0], 0, coord1[0], 0)),
+                ('c3B', color1 if i%2 == 0 else color2)
+            ))
+        self.space.add(*self.get_physical_object())
+        self.update()
+
+    def get_physical_object(self):
+        return [self.terrain_body] + self.terrain_shapes
+
+    def update(self):
+        for i in range(len(self.terrain_shapes)):
+            vertices = self.terrain_shapes[i].get_vertices()
+            pyglet_coords = []
+            for v in vertices:
+                x, y = v
+                pyglet_coords.extend((x+self.window.width//2, y))
+            self.terrain_primitives[i].vertices = pyglet_coords

@@ -41,6 +41,21 @@ images.append(mb_wheel_img)
 mb_holder_img = pyglet.resource.image('mb_holder.png')
 images.append(mb_holder_img)
 
+vbv_chassis_img = pyglet.resource.image('vbv_chassis.png')
+images.append(vbv_chassis_img)
+
+vbv_wheels_img = pyglet.resource.image('vbv_wheels.png')
+images.append(vbv_wheels_img)
+
+vbv_platform_img = pyglet.resource.image('vbv_platform.png')
+images.append(vbv_platform_img)
+
+vb_net_img = pyglet.resource.image('vb_net.png')
+images.append(vb_net_img)
+
+vb_ball_img = pyglet.resource.image('vb_ball.png')
+images.append(vb_ball_img)
+
 game1_button_img = pyglet.resource.image('game1.png')
 images.append(game1_button_img)
 
@@ -52,6 +67,12 @@ images.append(game2_button_img)
 
 game2_button_hover_img = pyglet.resource.image('game2_hover.png')
 images.append(game2_button_hover_img)
+
+game3_button_img = pyglet.resource.image('game3.png')
+images.append(game3_button_img)
+
+game3_button_hover_img = pyglet.resource.image('game3_hover.png')
+images.append(game3_button_hover_img)
 
 game1_hs_button_img = pyglet.resource.image('game1_hs.png')
 images.append(game1_hs_button_img)

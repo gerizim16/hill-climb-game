@@ -1,6 +1,11 @@
 import pyglet
 from . import resources
 
+
+def mapFromTo(x, a, b, c, d):
+    y=(x-a)/(b-a)*(d-c)+c
+    return y
+
 class GoalSprite(object):
     def __init__(self, batch, position, group=None):
         x, y = position
@@ -21,7 +26,7 @@ class GoalSprite(object):
         self.meter_sprite.update(x=self.start + self.distance*completion_percent)
 
 class MeterSprite(object):
-    def __init__(self, batch, position, group=None):
+    def __init__(self, batch, position, scale=1, group=None):
         x, y = position
         self.motor_sprite_bg = pyglet.sprite.Sprite(
             img=resources.circle_meter_img,
@@ -29,8 +34,8 @@ class MeterSprite(object):
         self.motor_sprite = pyglet.sprite.Sprite(img=resources.pointer_img, 
             x=x, y=y, batch=batch, group=group)
         self.motor_sprite.rotation = -25
-        self.motor_sprite_bg.scale = 0.5
-        self.motor_sprite.scale = 0.5
+        self.motor_sprite_bg.scale = 0.5*scale
+        self.motor_sprite.scale = 0.5*scale
 
     def update(self, percent):
         self.motor_sprite.update(rotation=-25+230*percent)
@@ -65,3 +70,34 @@ class ParallaxBG(object):
                 sprite_set[0].update(x=sprite_set[1].x+sprite_set[1].width)
                 sprite_set.reverse()
         self.past_offset = offset
+
+class BallIndicator(object):
+    def __init__(self, batch, window, group=None):
+        self.height = window.height
+        self.max_height = self.height + 400
+        self.length = 70
+        self.batch = batch
+        self.opacity = 0
+        self.sprite = self.batch.add_indexed(
+            4, pyglet.gl.GL_TRIANGLES, group,
+            [0, 1, 3, 1, 2, 3],
+            ('v2f', (0, 0, 0, 1, 1, 1, 1, 0)),
+            ('c4B', (0, 0, 0, 0)*4)
+        )
+
+    def update(self, x, height):
+        if height > self.height:
+            self.opacity = 255
+            width = mapFromTo(height, self.height, self.max_height, 0, self.length)
+            verts = (
+                x-width, self.height,
+                x+width, self.height,
+                x+width, self.height-20,
+                x-width, self.height-20,
+            )
+            color = (int(mapFromTo(height, self.height, self.max_height, 255, 0)), int(mapFromTo(height, self.height, self.max_height, 0, 255)), 0, self.opacity)*4
+            self.sprite.vertices = verts
+        else:
+            self.opacity = 0
+            color = (255, 255, 255, self.opacity)*4
+        self.sprite.colors = color

@@ -468,3 +468,120 @@ class MotorBike(Vehicle):
         self.constraints.append(wheel2_gj)
         wheel2_ds = pymunk.DampedSpring(wheel2_body, self.chassis.body, (0, 0), (50, 35), 110, 60, 7)
         self.constraints.append(wheel2_ds)
+
+class VbVehicle(Vehicle):
+    name = 'vb_vehicle'
+    def __init__(self, batch, space, window, position, side='left', 
+                 torque=60000, speed=12*pi, group=None):
+        super().__init__(batch, space, window, position, side=side,
+                         torque=torque, speed=speed)
+
+        self.__build_vehicle()
+        for sprite in self.sprites:
+            sprite.group = group
+
+        self.space.add(self.get_physical_object())
+
+        self.min_pitch, self.max_pitch = 1, 2
+        self.engine_sound = SoundLoop(resources.engine_sfx)
+        self.engine_sound.play()
+        self.event_handlers = []
+
+    def __build_vehicle(self):
+        self.__build_chassis()
+        self.__build_wheels()
+        self.__build_platform()
+
+    def __build_chassis(self):
+        chassis_mass = 0.4
+        chassis_coords = ((-60, 45), (60, 45), (75, 0), (-75, 0))
+        if self.side == -1:
+            chassis_coords = tuple(map(lambda coord: (-coord[0], coord[1]), chassis_coords))
+        chassis_moment = pymunk.moment_for_poly(chassis_mass, chassis_coords)
+        chassis_body = pymunk.Body(chassis_mass, chassis_moment)
+        chassis_body.position = self.position[0], self.position[1]
+        chassis_shape = pymunk.Poly(chassis_body, chassis_coords)
+        chassis_shape.filter = pymunk.ShapeFilter(categories=0b1000000, mask=0b1011111)
+        chassis_shape.elasticity = 0.3
+        chassis_shape.friction = 0.3
+        chassis_sprite = pyglet.sprite.Sprite(
+            img=resources.vbv_chassis_img,
+            x=chassis_body.position.x, y=chassis_body.position.y, batch=self.batch)
+        if self.side == -1:
+            chassis_sprite.scale_x = -1
+        chassis = PhysicalObject(chassis_body, chassis_sprite)
+        self.chassis = chassis
+        self.sprites.append(chassis_sprite)
+        self.bodies.append(chassis_body)
+        self.shapes.append(chassis_shape)
+        self.physical_objects.append(chassis)
+
+    def __build_wheels(self):
+        mass = 0.2
+        radius = 25
+        wheel_moment = pymunk.moment_for_circle(mass, 0, radius)
+        for i in (-80, 80):
+            wheel_body = pymunk.Body(mass, wheel_moment)
+            wheel_body.position = self.position[0]+i, self.position[1]
+            wheel_shape = pymunk.Circle(wheel_body, radius)
+            wheel_shape.filter = pymunk.ShapeFilter(categories=0b0100000, mask=0b1111101)
+            wheel_shape.elasticity = 0.3
+            wheel_shape.friction = 1
+            wheel_sprite = pyglet.sprite.Sprite(
+                img=resources.vbv_wheels_img,
+                x=wheel_body.position.x, y=wheel_body.position.y, batch=self.batch)
+            wheel = PhysicalObject(wheel_body, wheel_sprite)
+            self.sprites.append(wheel_sprite)
+            self.wheels.append(wheel)
+            self.bodies.append(wheel_body)
+            self.shapes.append(wheel_shape)
+            self.physical_objects.append(wheel)
+
+            wheel_gj = pymunk.GrooveJoint(self.chassis.body, wheel_body, (wheel_body.position.x-self.chassis.body.position.x, 20), (wheel_body.position.x-self.chassis.body.position.x, -20), (0, 0))
+            wheel_ds = pymunk.DampedSpring(self.chassis.body, wheel_body, (wheel_body.position.x-self.chassis.body.position.x, 25), (0, 0), 35, 100, 2)
+            wheel_m = pymunk.SimpleMotor(self.chassis.body, wheel_body, 3*pi)
+            wheel_m.max_force = 0
+            self.constraints.extend((wheel_gj, wheel_ds, wheel_m))
+            self.motors.append(wheel_m)
+
+    def __build_platform(self):
+        mass = 0.15
+        size = (145, 5)
+        moment = pymunk.moment_for_box(mass, size)
+        body = pymunk.Body(mass, moment)
+        body.position = self.position[0], self.position[1]+70
+        shape = pymunk.Poly.create_box(body, size)
+        shape.filter = pymunk.ShapeFilter(categories=0b1000000, mask=0b1111111)
+        shape.elasticity = 1
+        shape.friction = 0.95
+        sprite = pyglet.sprite.Sprite(
+            img=resources.vbv_platform_img,
+            x=body.position.x, y=body.position.y, batch=self.batch)
+        platform = PhysicalObject(body, sprite)
+        self.sprites.append(sprite)
+        self.bodies.append(body)
+        self.shapes.append(shape)
+        self.physical_objects.append(platform)
+        if self.side == 1:
+            angle = -pi/7
+            platform_offset = 60
+        else:
+            angle = pi/7
+            platform_offset = -60
+        groove_j = pymunk.GrooveJoint(self.chassis.body, body, (body.position.x-self.chassis.body.position.x, 70), (body.position.x-self.chassis.body.position.x+platform_offset, 150), (0, 0))
+        damped_s = pymunk.DampedSpring(self.chassis.body, body, (body.position.x-self.chassis.body.position.x, 45), (0, 0), 25, 1400, 20)
+        # damped_r = pymunk.DampedRotarySpring(self.chassis.body, body, angle, 2000000, 80)
+        rotary_l = pymunk.RotaryLimitJoint(self.chassis.body, body, angle, angle)
+        self.constraints.extend((groove_j, damped_s, rotary_l))
+        self.platform_spring = damped_s
+        self.platform_rotator = rotary_l
+
+    def extend(self):
+        self.platform_spring.rest_length = 95
+
+    def rest(self):
+        self.platform_spring.rest_length = 35
+
+    def jump(self):
+        # self.chassis.body.apply_impulse_at_local_point((0,50), point=(0, 0))
+        pass
